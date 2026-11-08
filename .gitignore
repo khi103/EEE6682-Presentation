@@ -1,0 +1,8 @@
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+# Do not commit unlicensed lecture code, the IEEE-licensed source PDF, or slide crops.
+paper/
+assets/paper_*.png
+work/
