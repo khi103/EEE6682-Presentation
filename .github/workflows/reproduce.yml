@@ -16,13 +16,13 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - name: Install scientific dependencies
+      - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Unit tests
+      - name: Run quantitative tests
         run: pytest -q tests/test_p3.py
-      - name: Regenerate figures and JSON
-        run: python simulation/p3_reproduce.py --out results
+      - name: Run modified course-script methodology for P3
+        run: python simulation/sim3_ffe_P3_adapted.py --out results
       - uses: actions/upload-artifact@v4
         with:
-          name: p3-figures-and-results
+          name: p3-simulation-and-validation
           path: results/
