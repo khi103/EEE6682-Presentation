@@ -142,9 +142,9 @@ class SpiceRunner:
         if clamp_v is None:
             return {
                 "pad_V": spice_vector(txt, "v(pad)"),
-                "driver_supply_A": spice_vector(txt, "vsup#branch"),
+                "driver_supply_A": spice_vector(txt, "i(vsup)"),
             }
-        return {"clamp_A": spice_vector(txt, "vclamp#branch")}
+        return {"clamp_A": spice_vector(txt, "i(vclamp)")}
 
     def rout(self, code: int, wu: float, wd: float, corner: str,
              temp_c: float = PROCESS_TEMP_C, v_signal: float = V_SIGNAL) -> float:
