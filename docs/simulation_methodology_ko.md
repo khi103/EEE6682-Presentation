@@ -1,3 +1,18 @@
+# P3 시뮬레이션 방법 - 한국어 요약
+
+**실제 실행한 것은 Python 행동 모델입니다.** 원 논문 0.18-µm MOSFET 회로를 PDK/SPICE로 검증한 것이 아닙니다.
+
+1. 강의 원본: khi103/serdes-lecture-site/linksim_H-L/sim3_ffe.py. 원본은 56 Gb/s, 3/5/9-Tap ZF와 Σ|c|=1 예제이며 Verilator + Touchstone 모델입니다.
+2. P3 변환: 3.6 Gb/s NRZ, 250 mVpp, 12 dB @ 1.8 GHz, 2-Tap α=0.30, 3/5/9-Tap 추가 비교. 원본 전체 시뮬레이터를 수정 실행한 것이 아니라 수학적 FFE 방법을 독립 Python 코드로 이식했습니다.
+3. 실제 모델 소자: 동일한 두 개의 RC 저역통과 극점을 scipy.signal.lfilter로 모델링했습니다. fc=1.042524557 GHz, τ=152.663 ps입니다. 50 Ω + 3.053260 pF의 버퍼 분리 RC 넷리스트는 설명용 등가 회로이며 논문 MOS driver의 소자값이 아닙니다.
+4. 신호 조건: PRBS7 2048bit, UI=277.78 ps, OSR=32, Gaussian 110-ps TX edge, RX 잡음과 지터는 0으로 가정합니다. Σ|c|=1에서 c0=0.76923, c1=-0.23077이고 TX DC swing은 134.615 mVpp입니다.
+5. 실행 검증: Python 단위 테스트 4개 통과. 1/2/3/5/9-Tap eye height는 각각 33.90/70.13/65.24/70.14/70.20 mV입니다. 논문 실측 Fig.25의 37 mV x 189 ps와 Python 계산의 70.13 mV x 173.61 ps는 다른 모델이므로 같다고 주장하지 않습니다.
+6. GitHub 경로: simulation/p3_reproduce.py, simulation/sim3_ffe_P3_adapted.py, simulation/export_veusz.py, results/p3_results.json, veusz/*.csv, veusz/P3_Editable_Plots.vsz, circuits/two_pole_rc_surrogate.cir.
+7. **미구현**: 8:4:2:1 MOS segmented driver, 50-Ω Zout PVT, Comparator, PLL/CDR, BER 및 실제 power. ngspice/Verilator/Veusz의 이 환경 내 실행 확인도 없습니다.
+
+아래에는 영어로 상세한 계산 절차, 구분표, 실행 명령과 검증 수치가 정리되어 있습니다.
+
+---
 # P3 simulation provenance, mathematical circuit, and validation (Nov. 11, 2026)
 
 **Scope:** This repository contains an **independent Python behavioral simulation**, not a transistor-level recreation of Wong et al., *IEEE JSSC*, vol. 39, no. 4, pp. 602-612 (2004).
