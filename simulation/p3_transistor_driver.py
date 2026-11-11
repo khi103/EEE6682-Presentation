@@ -355,7 +355,7 @@ def main(out: Path, symbols: int, do_transient: bool):
         rows.append({
           "corner":"tt","temp_C":27,"code":code,"up_fraction":code/15.0,
           "vout_V":d["pad_V"],"ideal_loaded_V":0.125+0.25*code/15.0,
-          "rout_ohm_at_0p25V":z,
+          "rout_ohm_at_vref":z,
           "p_signal_supply_mW":max(0,-d["driver_supply_A"]*V_SIGNAL*1e3),
         })
     save_csv(out/"tt_code_sweep.csv",rows)
@@ -367,7 +367,7 @@ def main(out: Path, symbols: int, do_transient: bool):
                 z=runner.rout(code,wu,wd,corner,temp_c=temp)
                 variation.append({
                  "corner":corner,"temp_C":temp,"v_signal_V":V_SIGNAL,"code":code,
-                 "vout_V":d["pad_V"],"rout_ohm_at_0p25V":z,
+                 "vout_V":d["pad_V"],"rout_ohm_at_vref":z,
                  "p_signal_supply_mW":max(0,-d["driver_supply_A"]*V_SIGNAL*1e3),
                 })
     save_csv(out/"pvt_corner_sweep.csv",variation)
@@ -376,7 +376,7 @@ def main(out: Path, symbols: int, do_transient: bool):
             d=runner.dc(code,wu,wd,"tt",temp_c=temp)
             z=runner.rout(code,wu,wd,"tt",temp_c=temp)
             variation.append({"corner":"tt","temp_C":temp,"v_signal_V":V_SIGNAL,"code":code,
-                "vout_V":d["pad_V"],"rout_ohm_at_0p25V":z,
+                "vout_V":d["pad_V"],"rout_ohm_at_vref":z,
                 "p_signal_supply_mW":max(0,-d["driver_supply_A"]*V_SIGNAL*1e3)})
     # +/-10% on the separate 0.5-V SIGNAL supply. Core gate VDD remains 1.8 V.
     # VREF and the incremental-resistance clamp track VS/2.
@@ -386,10 +386,10 @@ def main(out: Path, symbols: int, do_transient: bool):
             z=runner.rout(code,wu,wd,"tt",temp_c=27.0,v_signal=supply)
             variation.append({"corner":"tt","temp_C":27.0,"v_signal_V":supply,
                 "code":code,"vout_V":d["pad_V"],
-                "rout_ohm_at_0p25V":z,
+                "rout_ohm_at_vref":z,
                 "p_signal_supply_mW":max(0,-d["driver_supply_A"]*supply*1e3)})
     save_csv(out/"pvt_corner_sweep.csv",variation)
-    rvals=[x["rout_ohm_at_0p25V"] for x in rows]
+    rvals=[x["rout_ohm_at_vref"] for x in rows]
     vout=[x["vout_V"] for x in rows]
     actual_lsb=(vout[-1]-vout[0])/15.
     dnl = [(vout[i+1]-vout[i])/actual_lsb-1 for i in range(15)]
