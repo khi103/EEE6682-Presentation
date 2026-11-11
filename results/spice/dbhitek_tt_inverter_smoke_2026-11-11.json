@@ -1,0 +1,38 @@
+{
+  "test": "DB HiTek 180 nm TT SVT CMOS inverter ngspice smoke test",
+  "source": "GitHub Actions job 130437677252, run 42995270080",
+  "run_url": "https://github.com/khi103/EEE6682-Presentation/actions/runs/42995270080",
+  "executed_at_utc": "2026-11-11T09:27:17Z",
+  "simulator": "ngspice 42",
+  "compatibility": "hs",
+  "workflow_conclusion": "success",
+  "simulation_exit_code": 0,
+  "transient_rows": 1650,
+  "interval_ns": [
+    0,
+    8
+  ],
+  "vin_min_V": 0,
+  "vin_max_V": 1.8,
+  "vout_min_V": -0.0564513357,
+  "vout_max_V": 1.89866359,
+  "vout_median_at_vin_low_V": 1.79999998,
+  "vout_median_at_vin_high_V": 2.391571885e-7,
+  "checks": [
+    "basic numeric waveform",
+    "time monotonicity",
+    "full 8 ns interval",
+    "output inversion state medians",
+    "voltage swing"
+  ],
+  "warnings": [
+    "Some HSPICE-only model parameters ignored by ngspice",
+    "Waveform undershoot/overshoot observed"
+  ],
+  "limits": [
+    "Not a proof of numerical equivalence to HSPICE",
+    "Does not verify paper's 8:4:2:1 segmented TX driver",
+    "Does not measure output impedance, power, BER, PVT or physical silicon",
+    "Foundry model bytes not included"
+  ]
+}
