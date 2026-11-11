@@ -1,57 +1,61 @@
 #!/usr/bin/env bash
-# Local-only DB HiTek 180-nm 1.8-V SVT smoke test.
-# Use in a Codespace/workstation ONLY if the foundry license permits
-# storing and using model files there. This does not commit PDK bytes.
+# Local-only P3 ngspice smoke test (DO NOT COMMIT PDK model sources).
+# This uses a zero-DTEMP ngspice-compat model COPY and keeps the HSPICE
+# model and original archive untouched.
 set -euo pipefail
-
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PDK_DIR="$ROOT/pdk_private"
 ZIP="${1:-$ROOT/P3_DBHitek180_1p8V_SVT_Local_Model_Subset.zip}"
-MODEL="$PDK_DIR/db180_svt018_tt.lib"
-CIR="$PDK_DIR/smoke_ngspice_inverter.cir"
-LOG="$PDK_DIR/smoke_ngspice.log"
+SOURCE="$PDK_DIR/db180_svt018_tt.lib"
+SOURCE_CIR="$PDK_DIR/smoke_ngspice_inverter.cir"
+RUN_DIR="$PDK_DIR/ngspice_compat"
+MODEL="$RUN_DIR/db180_svt018_tt.lib"
+CIR="$RUN_DIR/smoke_ngspice_inverter.cir"
+LOG="$RUN_DIR/smoke_ngspice.log"
+CSV="$RUN_DIR/inverter_transient.csv"
 
-command -v ngspice >/dev/null || { echo "ERROR: ngspice not installed"; exit 2; }
+command -v ngspice >/dev/null || { echo "ERROR: ngspice missing"; exit 2; }
+command -v python3 >/dev/null || { echo "ERROR: python3 missing"; exit 2; }
 
-if [[ ! -f "$MODEL" || ! -f "$CIR" ]]; then
+if [[ ! -f "$SOURCE" || ! -f "$SOURCE_CIR" ]]; then
     if [[ ! -f "$ZIP" ]]; then
-        echo "MISSING: $MODEL / $CIR"
-        echo "Upload the local-only P3_DBHitek180_1p8V_SVT_Local_Model_Subset.zip to the repository folder in Codespaces."
-        echo "Then run: bash scripts/run_dbhitek_smoke.sh"
-        echo "Do NOT git add/commit the foundry model archive or extracted .lib files."
+        echo "MISSING local model or netlist: $SOURCE or $SOURCE_CIR"
+        echo "Place the authorized subset ZIP in the repository root."
         exit 2
     fi
-    command -v unzip >/dev/null || { echo "ERROR: unzip not installed"; exit 2; }
+    command -v unzip >/dev/null || { echo "ERROR: unzip missing"; exit 2; }
     mkdir -p "$PDK_DIR"
     unzip -oq "$ZIP" -d "$PDK_DIR"
 fi
 
-if [[ ! -f "$PDK_DIR/.spiceinit" ]]; then
-    printf '%s\n' "set ngbehavior=hs" > "$PDK_DIR/.spiceinit"
-fi
+mkdir -p "$RUN_DIR"
+python3 "$ROOT/scripts/prepare_ngspice_model.py" "$SOURCE" "$MODEL"
+cp "$SOURCE_CIR" "$CIR"
+printf '%s\n' "set ngbehavior=hs" > "$RUN_DIR/.spiceinit"
+rm -f "$CSV" "$LOG"
 
 echo "ngspice: $(ngspice --version | grep -m1 -i ngspice || true)"
-echo "Run directory: $PDK_DIR"
-echo "Model and circuit: found"
+echo "Test copy directory: $RUN_DIR"
+echo "HSPICE model source remains unchanged in $PDK_DIR"
 set +e
-(cd "$PDK_DIR" && ngspice -b smoke_ngspice_inverter.cir > smoke_ngspice.log 2>&1)
+(cd "$RUN_DIR" && ngspice -b smoke_ngspice_inverter.cir > smoke_ngspice.log 2>&1)
 STATUS=$?
 set -e
+
 echo
-echo "---- Last 50 log lines ----"
-tail -n 50 "$LOG"
-echo "---------------------------"
+echo "---- Last 70 ngspice log lines ----"
+tail -n 70 "$LOG"
+echo "---------------------------------"
 echo "ngspice process exit: $STATUS"
 
-if [[ -s "$PDK_DIR/inverter_transient.csv" ]]; then
-    echo "Transient output exists: $PDK_DIR/inverter_transient.csv"
-    echo "IMPORTANT: inspect log for model parse errors, unknown params, or convergence issues."
-else
-    echo "No valid transient CSV was produced. Check the log above."
-    exit 3
-fi
-if [[ $STATUS -ne 0 ]] || grep -Eiq '(^|[[:space:]])(error:|fatal:)|cannot open|no such file|unknown subcircuit|unknown model' "$LOG"; then
-    echo "Potential model or simulation error detected. Review full log."
+if [[ $STATUS -ne 0 ]] || grep -Eiq '(^|[[:space:]])(error:|fatal:)|cannot open|no such file|unknown subcircuit|unknown model|simulation interrupted' "$LOG"; then
+    echo "ERROR: ngspice model loading or simulation failed."
     exit 4
 fi
-echo "Smoke test produced data; electrical plausibility and HSPICE equivalence still require checking."
+if [[ ! -s "$CSV" ]]; then
+    echo "ERROR: transient waveform CSV not generated."
+    exit 3
+fi
+echo "Transient waveform CSV: $CSV"
+echo "Smoke test completed without fatal errors. Next: check inverter"
+echo "waveform plausibility, skipped parameter warnings, and HSPICE equivalence."
