@@ -305,6 +305,25 @@ def eye_from_transient(rows: list[dict], bits: list[int], field: str) -> dict:
         raise RuntimeError("Eye metric could not be extracted")
     return best
 
+def eye_at_fixed_phase(rows: list[dict], bits: list[int], field: str,
+                       delay_UI: float = 1.20) -> float:
+    """One physically identical sample phase and latency for both FFE cases."""
+    from bisect import bisect_left
+    times=[r["time_s"] for r in rows]
+    vv=[r[field] for r in rows]
+    hi,lo=[],[]
+    for n in range(16,len(bits)-6):
+        t=(n+delay_UI)*UI_PS*1e-12
+        k=bisect_left(times,t)
+        if not 0<k<len(rows):continue
+        u=(t-times[k-1])/(times[k]-times[k-1])
+        sample=vv[k-1]+u*(vv[k]-vv[k-1])
+        (hi if bits[n] else lo).append(sample)
+    if len(hi)<10 or len(lo)<10:
+        raise RuntimeError("Not enough eye samples at common phase")
+    return (min(hi)-max(lo))*1e3
+
+
 def save_csv(path: Path, rows: list[dict]):
     if not rows: return
     with path.open("w", newline="", encoding="utf-8") as f:
@@ -362,7 +381,9 @@ def main(out: Path, symbols: int, do_transient: bool):
     save_csv(out/"pvt_corner_sweep.csv",variation)
     rvals=[x["rout_ohm_at_0p25V"] for x in rows]
     vout=[x["vout_V"] for x in rows]
-    dnl = [(vout[i+1]-vout[i])/(0.25/15)-1 for i in range(15)]
+    actual_lsb=(vout[-1]-vout[0])/15.
+    dnl = [(vout[i+1]-vout[i])/actual_lsb-1 for i in range(15)]
+    inl = [((v-vout[0])/actual_lsb-i) for i,v in enumerate(vout)]
     res={
        "status":"reconstructed_nmos_driver_simulated",
        "source":"P3 Wong et al. Fig.7 architecture (NOT exact transistor schematic)",
@@ -380,7 +401,10 @@ def main(out: Path, symbols: int, do_transient: bool):
         "code_count":16,"rout_min_ohm":min(rvals),"rout_max_ohm":max(rvals),
         "rout_mean_ohm":sum(rvals)/len(rvals),
         "output_min_V":min(vout),"output_max_V":max(vout),
+        "actual_loaded_swing_mVpp":(vout[-1]-vout[0])*1e3,
+        "actual_endpoint_lsb_mV":actual_lsb*1e3,
         "dnl_max_abs_LSB":max(abs(x) for x in dnl),
+        "inl_max_abs_LSB":max(abs(x) for x in inl),
         "dnl_LSB":dnl
        },
        "ngspice_invocations":runner.calls,
@@ -406,6 +430,7 @@ def main(out: Path, symbols: int, do_transient: bool):
             supply=[max(0,-v["supply_A"]*V_SIGNAL*1e3) for v in samples]
             modes[name]={"pad_eye":pad,"rx_eye":rx,
                          "driver_signal_supply_mean_mW":sum(supply)/len(supply),
+                         "rx_eye_at_common_1p20_UI_mV":eye_at_fixed_phase(samples,bits,"rx_V",1.20),
                          "waveform_rows":len(samples),"discrete_codes":sorted(set(codes))}
             print(f"Transient {name}: RX Eye {rx['eye_mV']:.3f}mV, {len(samples)} points",flush=True)
         res["transient"]=modes
