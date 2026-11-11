@@ -275,38 +275,35 @@ def parse_wrdata(path: Path) -> list[dict]:
     return records
 
 def eye_from_transient(rows: list[dict], bits: list[int], field: str) -> dict:
-    # The -12 dB buffered RC channel has group delay; optimize over full
-    # sampling phase, but use the SAME alignment method for both FFE cases.
-    # This reports a worst-case PRBS eye height, not BER.
-    index = 0
-    best = (-1e9, None)
-    for shift in range(0, 10):  # additional whole-UI latency
-        for frac in range(10, 100, 5):
-            values = [[], []]
+    """PRBS worst-case eye height after optimizing common sampling phase.
+
+    The same method is applied to baseline and FFE. This is *not* BER.
+    """
+    from bisect import bisect_left
+    times = [r["time_s"] for r in rows]
+    values = [r[field] for r in rows]
+    best = None
+    for shift in range(0, 5):
+        for frac_step in range(2, 20):  # 0.10 to 0.95 UI
+            frac = frac_step / 20.
+            hi, lo = [], []
             for n in range(16, len(bits)-6):
-                t = (n+shift+frac/100.0)*UI_PS*1e-12
-                while index+1 < len(rows) and rows[index+1]["time_s"] < t:
-                    index += 1
-                i = index
-                # Robust lookup with binary search below.
-                from bisect import bisect_left
-                times = [r["time_s"] for r in rows]
-                i = bisect_left(times, t)
-                if i < 1 or i >= len(rows):
+                t = (n + shift + frac) * UI_PS * 1e-12
+                k = bisect_left(times, t)
+                if k < 1 or k >= len(rows):
                     continue
-                a,b=rows[i-1],rows[i]
-                u=(t-a["time_s"])/(b["time_s"]-a["time_s"])
-                v=a[field]+u*(b[field]-a[field])
-                values[bits[n]].append(v)
-            if len(values[0]) < 10 or len(values[1]) < 10:
+                u = (t-times[k-1])/(times[k]-times[k-1])
+                v = values[k-1] + u*(values[k]-values[k-1])
+                (hi if bits[n] else lo).append(v)
+            if len(hi) < 10 or len(lo) < 10:
                 continue
-            h=(min(values[1])-max(values[0]))*1e3
-            if h > best[0]:
-                best=(h,{"eye_mV":h,"sample_delay_UI":shift+frac/100.,
-                         "n_hi":len(values[1]),"n_lo":len(values[0])})
-    if best[1] is None:
+            h = (min(hi)-max(lo))*1000.
+            if best is None or h > best["eye_mV"]:
+                best = {"eye_mV":h, "sample_delay_UI":shift+frac,
+                        "n_hi":len(hi),"n_lo":len(lo)}
+    if best is None:
         raise RuntimeError("Eye metric could not be extracted")
-    return best[1]
+    return best
 
 def save_csv(path: Path, rows: list[dict]):
     if not rows: return
