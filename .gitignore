@@ -6,3 +6,15 @@ __pycache__/
 paper/
 assets/paper_*.png
 work/
+
+# Keep licensed PDK model sources local and out of the repository.
+pdk_private/
+local_pdk/
+**/1830BD18BA_Rev3p6p0*.l
+**/dbody_nldmhs_12va.va.hspice
+**/dbody_nldmiso_12va.va.hspice
+**/dbody_pldm_12va.va.hspice
+**/dbody_nldmhs_12va.vp
+**/dbody_nldmiso_12va.vp
+**/dbody_pldm_12va.vp
+**/cornerSim.il
