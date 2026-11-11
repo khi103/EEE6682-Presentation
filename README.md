@@ -33,3 +33,33 @@ Our locally reproduced eye heights (1/2/3/5/9-tap): **33.90/70.13/65.24/70.14/70
 The Dec. 2 order is Group 10 P17, followed by Group 11 P3. **Group 11 is the assigned question group for P17**, and Group 1 will question Group 11. Each Group 11 member should prepare and ask a paper-grounded question. See [notes/p17_question_duty.md](notes/p17_question_duty.md).
 
 **Human actions remain necessary:** Verify actual student IDs and contribution split, rehearse 20 minutes, upload final slides to LearnUs by **Dec. 1, 23:59**, answer Q&A, ask P17 questions, and submit audience peer evaluation forms. These subjective/operational assessment items cannot be completed by code alone.
+
+
+## NEW: actual DB HiTek NMOS driver ngspice reconstruction (Nov. 11, 2026)
+
+This is separate from the Python-only FFE behavioral reproduction.
+
+- **Executable MOS reconstruction:** [simulation/p3_transistor_driver.py](simulation/p3_transistor_driver.py)
+- **Inspectable SPICE netlist:** [circuits/p3_8_4_2_1_nmos_example.cir](circuits/p3_8_4_2_1_nmos_example.cir)
+- **Results, circuit assumptions, and limitations:** [docs/p3_driver_spice_results_2026-11-11.md](docs/p3_driver_spice_results_2026-11-11.md)
+- **Automated 180-nm PDK-based CI:** [P3 ngspice workflow](.github/workflows/p3_driver_spice.yml)
+- **Permanent numerical results:** [results/spice/p3_segmented_driver/driver_summary.json](results/spice/p3_segmented_driver/driver_summary.json) plus `tt_code_sweep.csv` and `pvt_corner_sweep.csv`
+- **Editable Veusz chart specification:** [veusz/P3_MOS_Driver_Editable.vsz](veusz/P3_MOS_Driver_Editable.vsz)
+- **Verified successful Actions run:** [P3 MOS driver run 43000597888](https://github.com/khi103/EEE6682-Presentation/actions/runs/43000597888)
+
+Independent 8:4:2:1 NMOS pull-up/pull-down reconstruction, calibrated **at TT / 27°C only**:
+nominal incremental R_OUT **49.20–50.72 Ω** (16 codes); loaded swing **285.99 mVpp**,
+which is **not** the ideal 250-mVpp target; PRBS RX eye at a **fixed, identical**
+sample phase increased **50.96 → 90.01 mV** for a quantized α=0.30 two-tap FFE
+with the same two-pole surrogate channel. The 0.5-V signaling-source average
+power increased **0.780 → 1.014 mW**. Without bias/impedance feedback, the
+reconstructed stage varies from **42.81 Ω (FF)** to **58.67 Ω (SS)** at code 7.
+
+The **published** Fig. 25 silicon eye is **37 mV × 189 ps**, not our computed
+90.01-mV result. **This is not the original author's transistor-level circuit.**
+The exact predriver, impedance/slew feedback, actual cable S-parameters,
+jitter/RX/PLL, and full power budget are missing. ngspice also ignores several
+HSPICE-only BSIM3 model parameters; no HSPICE numeric correlation has yet been
+established. The 0.5-V signal supply power excludes gate-driver power and
+receiver termination bias. Use the full documentation rather than treating the
+good nominal 50-ohm result as a silicon validation.
