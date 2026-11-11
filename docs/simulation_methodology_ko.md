@@ -1,5 +1,7 @@
 # P3 시뮬레이션 방법 - 한국어 요약
 
+**2026-11-11 보완:** 이 문서는 초기 **Python 전용 링크 행동 모델**을 설명하는 문서야. 이후 추가로 DB HiTek 180 nm NMOS 8:4:2:1 드라이버 회로를 ngspice에서 실제 실행했어. 독립 MOS 결과 및 한계는 [회로 수준 검증 보고서](p3_driver_spice_results_2026-11-11.md)를 참고해. 두 실험은 모델과 기준이 다르므로 숫자를 그대로 섞어 비교하면 안 돼.
+
 **실제 실행한 것은 Python 행동 모델입니다.** 원 논문 0.18-µm MOSFET 회로를 PDK/SPICE로 검증한 것이 아닙니다.
 
 1. 강의 원본: khi103/serdes-lecture-site/linksim_H-L/sim3_ffe.py. 원본은 56 Gb/s, 3/5/9-Tap ZF와 Σ|c|=1 예제이며 Verilator + Touchstone 모델입니다.
@@ -8,7 +10,7 @@
 4. 신호 조건: PRBS7 2048bit, UI=277.78 ps, OSR=32, Gaussian 110-ps TX edge, RX 잡음과 지터는 0으로 가정합니다. Σ|c|=1에서 c0=0.76923, c1=-0.23077이고 TX DC swing은 134.615 mVpp입니다.
 5. 실행 검증: Python 단위 테스트 4개 통과. 1/2/3/5/9-Tap eye height는 각각 33.90/70.13/65.24/70.14/70.20 mV입니다. 논문 실측 Fig.25의 37 mV x 189 ps와 Python 계산의 70.13 mV x 173.61 ps는 다른 모델이므로 같다고 주장하지 않습니다.
 6. GitHub 경로: simulation/p3_reproduce.py, simulation/sim3_ffe_P3_adapted.py, simulation/export_veusz.py, results/p3_results.json, veusz/*.csv, veusz/P3_Editable_Plots.vsz, circuits/two_pole_rc_surrogate.cir.
-7. **미구현**: 8:4:2:1 MOS segmented driver, 50-Ω Zout PVT, Comparator, PLL/CDR, BER 및 실제 power. ngspice/Verilator/Veusz의 이 환경 내 실행 확인도 없습니다.
+7. **이 문서의 Python 모델에서 미구현:** 8:4:2:1 MOS segmented driver, MOS 출력 저항, Comparator, PLL/CDR, BER 및 실제 전체 링크 power. 별도 DB HiTek NMOS 재구성 시뮬레이션에서 드라이버 DC/Transient 및 PVT를 수행했지만, 논문의 완전한 제어 루프는 구현하지 않았어.
 
 아래에는 영어로 상세한 계산 절차, 구분표, 실행 명령과 검증 수치가 정리되어 있습니다.
 
