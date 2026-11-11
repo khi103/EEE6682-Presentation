@@ -38,7 +38,7 @@ jobs:
         with:
           name: dbhitek-ngspice-inverter-evidence
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 90
           path: |
             pdk_private/ngspice_compat/smoke_ngspice.log
             pdk_private/ngspice_compat/inverter_transient.csv
