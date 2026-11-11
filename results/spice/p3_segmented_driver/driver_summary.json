@@ -1,0 +1,204 @@
+{
+  "status": "reconstructed_nmos_driver_simulated",
+  "source": "P3 Wong et al. Fig.7 architecture (NOT exact transistor schematic)",
+  "method": "DB HiTek 0.18 um 1.8-V SVT NMOS ngspice-42; local HSPICE-compatible copy",
+  "model_assumptions": {
+    "v_core_gate_V": 1.8,
+    "v_signal_V": 0.5,
+    "v_common_V": 0.25,
+    "r_load_ohm": 50.0,
+    "channel": "two buffered RC poles with -12 dB at 1.8GHz",
+    "driver": "8:4:2:1 binary banks with complementary NMOS pullup/pulldown",
+    "width_calibration": "TT @ 27 C, no published impedance feedback loop",
+    "driver_supply_power_only": true,
+    "voltage_sweep": "0.45/0.50/0.55 V 0.5-V signaling supply at TT 27C, with core gate 1.8 V fixed",
+    "excluded": [
+      "P3 exact predriver/slew loop",
+      "actual impedance feedback",
+      "true PCB/RG58 S-parameters",
+      "PLL/CDR",
+      "RX comparator",
+      "full transceiver power",
+      "extracted parasitics"
+    ]
+  },
+  "calibration": {
+    "up": {
+      "unit_w_um": 1.4896875,
+      "measured_r_ohm": 49.1980714356003,
+      "bracketed": true,
+      "attempts": [
+        {
+          "w_um": 0.36,
+          "r_ohm": 210.32705857608596
+        },
+        {
+          "w_um": 10.0,
+          "r_ohm": 7.294478080093399
+        },
+        {
+          "w_um": 5.18,
+          "r_ohm": 14.093439503911071
+        },
+        {
+          "w_um": 2.77,
+          "r_ohm": 26.392187912378198
+        },
+        {
+          "w_um": 1.565,
+          "r_ohm": 46.81867128610917
+        },
+        {
+          "w_um": 0.9624999999999999,
+          "r_ohm": 76.38252367858153
+        },
+        {
+          "w_um": 1.26375,
+          "r_ohm": 58.04672761573053
+        },
+        {
+          "w_um": 1.414375,
+          "r_ohm": 51.83227077178228
+        },
+        {
+          "w_um": 1.4896875,
+          "r_ohm": 49.1980714356003
+        }
+      ]
+    },
+    "down": {
+      "unit_w_um": 1.4896875,
+      "measured_r_ohm": 50.722799898555486,
+      "bracketed": true,
+      "attempts": [
+        {
+          "w_um": 0.36,
+          "r_ohm": 217.39130434782592
+        },
+        {
+          "w_um": 10.0,
+          "r_ohm": 7.4990626171728065
+        },
+        {
+          "w_um": 5.18,
+          "r_ohm": 14.492753623188486
+        },
+        {
+          "w_um": 2.77,
+          "r_ohm": 27.17391304347824
+        },
+        {
+          "w_um": 1.565,
+          "r_ohm": 48.262548262548
+        },
+        {
+          "w_um": 0.9624999999999999,
+          "r_ohm": 78.86435331230456
+        },
+        {
+          "w_um": 1.26375,
+          "r_ohm": 59.8802395209576
+        },
+        {
+          "w_um": 1.414375,
+          "r_ohm": 53.44735435595965
+        },
+        {
+          "w_um": 1.4896875,
+          "r_ohm": 50.722799898555486
+        }
+      ]
+    }
+  },
+  "tt_code_sweep": {
+    "code_count": 16,
+    "rout_min_ohm": 49.1980714356003,
+    "rout_max_ohm": 50.722799898555486,
+    "rout_mean_ohm": 49.95165356593233,
+    "output_min_V": 0.09794456,
+    "output_max_V": 0.3839361,
+    "actual_loaded_swing_mVpp": 285.99154,
+    "actual_endpoint_lsb_mV": 19.066102666666666,
+    "dnl_max_abs_LSB": 0.13834304329421754,
+    "inl_max_abs_LSB": 0.3406817558309587,
+    "dnl_LSB": [
+      -0.13834304329421754,
+      -0.10095417507804605,
+      -0.06541466226588377,
+      -0.032586768126077414,
+      -0.003383107066734503,
+      0.021309931056002762,
+      0.040700364773028186,
+      0.05413782519580912,
+      0.06117649494107491,
+      0.061622312324341344,
+      0.0555434611807053,
+      0.04325988104403611,
+      0.025306552774251978,
+      0.002370559632637992,
+      -0.024745627090926647
+    ]
+  },
+  "ngspice_invocations": 197,
+  "unrecognized_hspice_model_params": [
+    "binflag",
+    "hspver",
+    "lref",
+    "tlev",
+    "tlevc",
+    "vfbflag",
+    "wref"
+  ],
+  "comparison": {
+    "paper_fig10_impedance_ohm": "roughly 47.5 to 50.7 across alpha with feedback",
+    "paper_fig25_eye": "37 mV x 189 ps, alpha=0.30; measured",
+    "paper_total_power_mW": 27.12,
+    "important": "The reconstruction has different PDK, bias, sizing and no real feedback; do NOT claim equivalence."
+  },
+  "transient": {
+    "baseline": {
+      "pad_eye": {
+        "eye_mV": 285.99155806244363,
+        "sample_delay_UI": 0.95,
+        "n_hi": 52,
+        "n_lo": 54
+      },
+      "rx_eye": {
+        "eye_mV": 50.95893844900168,
+        "sample_delay_UI": 1.2,
+        "n_hi": 52,
+        "n_lo": 54
+      },
+      "driver_signal_supply_mean_mW": 0.7799515769792867,
+      "rx_eye_at_common_1p20_UI_mV": 50.95893844900168,
+      "waveform_rows": 9910,
+      "discrete_codes": [
+        0,
+        15
+      ]
+    },
+    "ffe_alpha_0p30": {
+      "pad_eye": {
+        "eye_mV": 177.348737,
+        "sample_delay_UI": 0.1,
+        "n_hi": 52,
+        "n_lo": 54
+      },
+      "rx_eye": {
+        "eye_mV": 90.58662424343899,
+        "sample_delay_UI": 1.15,
+        "n_hi": 52,
+        "n_lo": 54
+      },
+      "driver_signal_supply_mean_mW": 1.0140974807199596,
+      "rx_eye_at_common_1p20_UI_mV": 90.00611586635834,
+      "waveform_rows": 9940,
+      "discrete_codes": [
+        0,
+        3,
+        12,
+        15
+      ]
+    }
+  }
+}
