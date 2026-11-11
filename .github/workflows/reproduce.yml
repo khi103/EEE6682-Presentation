@@ -22,7 +22,11 @@ jobs:
         run: pytest -q tests/test_p3.py
       - name: Run modified course-script methodology for P3
         run: python simulation/sim3_ffe_P3_adapted.py --out results
+      - name: Export editable Veusz datasets
+        run: python simulation/export_veusz.py
       - uses: actions/upload-artifact@v4
         with:
           name: p3-simulation-and-validation
-          path: results/
+          path: |
+            results/
+            veusz/
