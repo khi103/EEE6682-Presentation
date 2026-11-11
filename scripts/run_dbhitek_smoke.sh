@@ -29,8 +29,16 @@ if [[ ! -f "$SOURCE" || ! -f "$SOURCE_CIR" ]]; then
 fi
 
 mkdir -p "$RUN_DIR"
-python3 "$ROOT/scripts/prepare_ngspice_model.py" "$SOURCE" "$MODEL"
-cp "$SOURCE_CIR" "$CIR"
+# Reuse converted files in a persistent Codespace if unchanged.
+# Fresh GitHub-hosted Actions runners still reconstruct them per job.
+if [[ ! -f "$MODEL" || "$SOURCE" -nt "$MODEL" || "$ROOT/scripts/prepare_ngspice_model.py" -nt "$MODEL" ]]; then
+    python3 "$ROOT/scripts/prepare_ngspice_model.py" "$SOURCE" "$MODEL"
+else
+    echo "Reusing cached local ngspice-compatible model."
+fi
+if [[ ! -f "$CIR" || "$SOURCE_CIR" -nt "$CIR" ]]; then
+    cp "$SOURCE_CIR" "$CIR"
+fi
 printf '%s\n' "set ngbehavior=hs" > "$RUN_DIR/.spiceinit"
 rm -f "$CSV" "$LOG"
 
