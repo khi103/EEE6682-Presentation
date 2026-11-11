@@ -1,6 +1,6 @@
 # DB HiTek 180 nm — P3 1.8 V device inventory (metadata only)
 
-This file records **identifiers, terminal order, intended tests, and local references**, not foundry model parameter values or protected source. The available PDK library explicitly states restrictions on reproduction/adaptation/distribution, so neither the full PDK nor an extracted model subset has been committed to this repository. Confirm your own authorization before any remote distribution, even in a private repository.
+This file records **identifiers, terminal order, intended tests, and local references**, not foundry model parameter values or protected source. The available PDK library explicitly states restrictions on reproduction/adaptation/distribution, The user subsequently committed the extracted subset ZIP to this private repository. This file only lists metadata and does not reproduce foundry coefficients. Private hosting does not, by itself, establish redistribution permission; confirm your authorization.
 
 ## Source models examined locally
 
@@ -43,13 +43,13 @@ EEE6682-Presentation/
 
 Do **not** upload copied blocks of foundry `.model` parameters as a substitute for the original files. Check the license/contract before placing any foundry model bytes on GitHub Actions runners or other third-party servers.
 
-## Planned P3 circuit-level tests (not yet executed)
+## Updated execution status (Nov. 11, 2026)
 
-1. 1.8-V inverter / individual transistor DC and transient smoke test with the `tt_svt018` model.
-2. 8:4:2:1 weighted segment output-driver reconstruction, including bias controls and a 50-ohm load.
-3. DC output level and incremental output resistance `Rout = ΔVout/ΔItest` for each FFE coefficient/code, not solely a single operating point.
-4. Transient eye waveform and average supply-current integration with the **same** data pattern and channel assumptions as the behavioral model.
-5. Corner, supply, temperature variation, optionally mismatch after compatibility is validated.
-6. Compare with paper Fig. 7 (topology), Fig. 10 (impedance), Fig. 25 (eye), Table III–IV (power); label all reconstructed-model outputs separately from silicon measurements.
+- **Completed:** ngspice-42 inverter DC/Transient smoke test under `ngbehavior=hs`, 1650 waveform rows and basic switching validation.
+- **Completed:** independent 8:4:2:1 NMOS driver reconstruction with 16-code DC sweep, incremental output resistance measurement, nominal width calibration, FF/SS/FS/SF corners, -20/85°C and 0.45/0.55-V signaling-supply variation.
+- **Completed:** 128-bit PRBS7 MOS-driver transient test, FFE on/off at 3.6 Gb/s with the same surrogate two-pole channel.
+- **Verified CI run:** https://github.com/khi103/EEE6682-Presentation/actions/runs/43000597888
+- **Model/measurement report:** [P3 reconstructed MOS driver results](../p3_driver_spice_results_2026-11-11.md)
+- **Not completed:** HSPICE-versus-ngspice numerical correlation, original paper's real impedance feedback and slew control, accurate transmitter/RX PLL/CDR, physical PCB/cable S-parameter channel, full-link power, BER.
 
-**Status:** Only static file/device/corner mapping has been checked. No HSPICE or ngspice run using this PDK has yet been demonstrated here; ngspice compatibility remains an open test.
+The tested circuit is a **separate NMOS reconstruction** informed by the published Fig. 7, not an exact implementation of the authors' PDK and topology. HSPICE-specific model parameters are ignored by ngspice and require correlation testing.
