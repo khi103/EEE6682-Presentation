@@ -82,7 +82,7 @@ def make_dc(code: int, wu: float, wd: float, corner: str,
         f'.include "db180_svt018_{corner}.lib"',
         f".temp {temp_c}",
         f"VSUP vs 0 DC {v_signal}",
-        f"VREF vref 0 DC {V_COMMON}",
+        f"VREF vref 0 DC {v_signal/2:.8g}",
     ]
     lines += inv_sources(code, wu, wd)
     if clamp_v is None:
@@ -149,8 +149,8 @@ class SpiceRunner:
     def rout(self, code: int, wu: float, wd: float, corner: str,
              temp_c: float = PROCESS_TEMP_C, v_signal: float = V_SIGNAL) -> float:
         dv = 0.002
-        a = self.dc(code, wu, wd, corner, V_COMMON-dv/2, temp_c, v_signal)["clamp_A"]
-        b = self.dc(code, wu, wd, corner, V_COMMON+dv/2, temp_c, v_signal)["clamp_A"]
+        a = self.dc(code, wu, wd, corner, v_signal/2-dv/2, temp_c, v_signal)["clamp_A"]
+        b = self.dc(code, wu, wd, corner, v_signal/2+dv/2, temp_c, v_signal)["clamp_A"]
         conductance = abs(b-a)/dv
         if conductance <= 0:
             raise RuntimeError("Non-positive incremental conductance")
@@ -366,7 +366,7 @@ def main(out: Path, symbols: int, do_transient: bool):
                 d=runner.dc(code,wu,wd,corner,temp_c=temp)
                 z=runner.rout(code,wu,wd,corner,temp_c=temp)
                 variation.append({
-                 "corner":corner,"temp_C":temp,"code":code,
+                 "corner":corner,"temp_C":temp,"v_signal_V":V_SIGNAL,"code":code,
                  "vout_V":d["pad_V"],"rout_ohm_at_0p25V":z,
                  "p_signal_supply_mW":max(0,-d["driver_supply_A"]*V_SIGNAL*1e3),
                 })
@@ -375,9 +375,19 @@ def main(out: Path, symbols: int, do_transient: bool):
         for code in (0,7,15):
             d=runner.dc(code,wu,wd,"tt",temp_c=temp)
             z=runner.rout(code,wu,wd,"tt",temp_c=temp)
-            variation.append({"corner":"tt","temp_C":temp,"code":code,
+            variation.append({"corner":"tt","temp_C":temp,"v_signal_V":V_SIGNAL,"code":code,
                 "vout_V":d["pad_V"],"rout_ohm_at_0p25V":z,
                 "p_signal_supply_mW":max(0,-d["driver_supply_A"]*V_SIGNAL*1e3)})
+    # +/-10% on the separate 0.5-V SIGNAL supply. Core gate VDD remains 1.8 V.
+    # VREF and the incremental-resistance clamp track VS/2.
+    for supply in (0.45, 0.55):
+        for code in (0, 7, 15):
+            d=runner.dc(code,wu,wd,"tt",temp_c=27.0,v_signal=supply)
+            z=runner.rout(code,wu,wd,"tt",temp_c=27.0,v_signal=supply)
+            variation.append({"corner":"tt","temp_C":27.0,"v_signal_V":supply,
+                "code":code,"vout_V":d["pad_V"],
+                "rout_ohm_at_0p25V":z,
+                "p_signal_supply_mW":max(0,-d["driver_supply_A"]*supply*1e3)})
     save_csv(out/"pvt_corner_sweep.csv",variation)
     rvals=[x["rout_ohm_at_0p25V"] for x in rows]
     vout=[x["vout_V"] for x in rows]
@@ -394,6 +404,7 @@ def main(out: Path, symbols: int, do_transient: bool):
           "driver":"8:4:2:1 binary banks with complementary NMOS pullup/pulldown",
           "width_calibration":"TT @ 27 C, no published impedance feedback loop",
           "driver_supply_power_only":True,
+          "voltage_sweep":"0.45/0.50/0.55 V 0.5-V signaling supply at TT 27C, with core gate 1.8 V fixed",
           "excluded":["P3 exact predriver/slew loop","actual impedance feedback","true PCB/RG58 S-parameters","PLL/CDR","RX comparator","full transceiver power","extracted parasitics"],
        },
        "calibration":{"up":up,"down":dn},
