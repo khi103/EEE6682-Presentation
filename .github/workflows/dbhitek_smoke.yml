@@ -1,0 +1,45 @@
+name: DB HiTek 180nm ngspice inverter smoke test
+
+# Only runs against existing private-repository model archive.
+# No PDK model files are published as artifacts.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/run_dbhitek_smoke.sh'
+      - 'scripts/prepare_ngspice_model.py'
+      - 'scripts/validate_dbhitek_inverter.py'
+      - 'P3_DBHitek180_1p8V_SVT_Local_Model_Subset.zip'
+      - '.github/workflows/dbhitek_smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dbhitek-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out private P3 repository
+        uses: actions/checkout@v4
+      - name: Install ngspice and unzip
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ngspice unzip
+          ngspice --version | head -n 3
+      - name: Run isolated HSPICE-to-ngspice compatibility smoke test
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Verify 1.8-V inverter transient behavior
+        run: python3 scripts/validate_dbhitek_inverter.py
+      - name: Upload only simulation evidence (no foundry model files)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbhitek-ngspice-inverter-evidence
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            pdk_private/ngspice_compat/smoke_ngspice.log
+            pdk_private/ngspice_compat/inverter_transient.csv
+            pdk_private/ngspice_compat/smoke_metrics.json
