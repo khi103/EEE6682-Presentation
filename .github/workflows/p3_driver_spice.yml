@@ -1,0 +1,51 @@
+name: P3 180nm segmented NMOS TX impedance power and PVT
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_transistor_driver.py'
+      - 'simulation/plot_p3_driver.py'
+      - 'scripts/prepare_ngspice_model.py'
+      - '.github/workflows/p3_driver_spice.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  simulate-p3-driver:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out private workspace
+        uses: actions/checkout@v4
+      - name: Install ngspice and plotting dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip python3 python3-pip
+          python3 -m pip install --user --break-system-packages matplotlib
+          ngspice --version | head -n 3
+      - name: Check MOS model compatibility on CMOS inverter
+        run: |
+          bash scripts/run_dbhitek_smoke.sh
+          python3 scripts/validate_dbhitek_inverter.py
+      - name: Reconstruct 8-4-2-1 NMOS TX driver and simulate
+        run: |
+          python3 simulation/p3_transistor_driver.py --symbols 128
+      - name: Render voltage-code, output resistance, corner and power plots
+        run: |
+          python3 simulation/plot_p3_driver.py
+      - name: Publish simulation evidence only (exclude foundry PDK)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-reconstructed-180nm-segmented-driver-results
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            results/spice/p3_segmented_driver/*.csv
+            results/spice/p3_segmented_driver/*.json
+            results/spice/p3_segmented_driver/*.png
+            pdk_private/ngspice_compat/smoke_ngspice.log
+            pdk_private/ngspice_compat/smoke_metrics.json
