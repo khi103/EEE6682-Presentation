@@ -1,0 +1,50 @@
+* P3 8:4:2:1 NMOS-only output driver: INDEPENDENT RECONSTRUCTION
+* Original paper: Wong et al., JSSC vol.39 no.4, Fig.7(a,b), 2004.
+* This is NOT the paper's exact schematic: voltage regulation and slew
+* control/feedback are absent. MOS widths were adjusted at TT/27C for
+* nominal output impedance using local ngspice + DB HiTek SVT models.
+*
+* Inspect connectivity here; for executable 16-code/PVT/transient decks,
+* use python simulation/p3_transistor_driver.py. Generated decks are
+* stored only under pdk_private/ngspice_compat/p3_tx_tests.
+*
+* This standalone inspection file needs a local copy of the TT .lib in
+* the working directory; it does NOT contain foundry model coefficients.
+.include "db180_svt018_tt.lib"
+.temp 27
+.param WU=1.4896875u
+.param WD=1.4896875u
+VSUP vs 0 DC 0.5
+VREF vref 0 DC 0.25
+* Digital code 12 (binary 1100): upper weights to Vs, lower to GND.
+* Exactly ONE of pullup/pulldown is enabled for each active bank.
+VGU8 gu8 0 DC 1.8
+VGD8 gd8 0 DC 0
+VGU4 gu4 0 DC 1.8
+VGD4 gd4 0 DC 0
+VGU2 gu2 0 DC 0
+VGD2 gd2 0 DC 1.8
+VGU1 gu1 0 DC 0
+VGD1 gd1 0 DC 1.8
+*
+* Pin order: DB HiTek NMOS subckt is D G S B.
+* Pullup NMOS source is PAD, drain tied to 0.5-V VS.
+* Pulldown NMOS drain is PAD, source/bulk tied to ground.
+XPU8 vs gu8 pad 0 nch_svt_1p8v width={WU} length=0.18u multi=8
+XPD8 pad gd8 0 0 nch_svt_1p8v width={WD} length=0.18u multi=8
+XPU4 vs gu4 pad 0 nch_svt_1p8v width={WU} length=0.18u multi=4
+XPD4 pad gd4 0 0 nch_svt_1p8v width={WD} length=0.18u multi=4
+XPU2 vs gu2 pad 0 nch_svt_1p8v width={WU} length=0.18u multi=2
+XPD2 pad gd2 0 0 nch_svt_1p8v width={WD} length=0.18u multi=2
+XPU1 vs gu1 pad 0 nch_svt_1p8v width={WU} length=0.18u multi=1
+XPD1 pad gd1 0 0 nch_svt_1p8v width={WD} length=0.18u multi=1
+* Source termination experiment: 50-ohm receiver to common-mode.
+RTERM pad vref 50
+CPAD pad 0 100f
+.control
+set noaskquit
+op
+print v(pad) i(vsup)
+quit
+.endc
+.end
