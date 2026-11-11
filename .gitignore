@@ -18,3 +18,8 @@ local_pdk/
 **/dbody_nldmiso_12va.vp
 **/dbody_pldm_12va.vp
 **/cornerSim.il
+
+# Local, derived DB HiTek SVT 1.8-V model subsets (foundry-derived content)
+**/db180_svt018_*.lib
+**/P3_DBHitek180*Model_Subset.zip
+**/P3_DBHitek180_local_subset/
