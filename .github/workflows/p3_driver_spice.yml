@@ -10,6 +10,7 @@ on:
       - 'simulation/p3_gate_bias_authority.py'
       - 'simulation/p3_rx_noise_jitter_sensitivity.py'
       - 'simulation/p3_rx_offset_sensitivity.py'
+      - 'simulation/p3_behavioral_cdr.py'
       - 'scripts/validate_p3_driver_results.py'
       - 'scripts/prepare_ngspice_model.py'
       - '.github/workflows/p3_driver_spice.yml'
@@ -43,6 +44,8 @@ jobs:
         run: python3 simulation/p3_rx_noise_jitter_sensitivity.py --trials 2000
       - name: Test synthetic comparator input offset and ideal correction
         run: python3 simulation/p3_rx_offset_sensitivity.py
+      - name: Test functional bang-bang CDR on simulated RX waveforms
+        run: python3 simulation/p3_behavioral_cdr.py
       - name: Render voltage-code, output resistance, corner and power plots
         run: |
           python3 simulation/plot_p3_driver.py
@@ -62,7 +65,9 @@ jobs:
                      results/spice/p3_segmented_driver/rx_noise_jitter_robustness.csv \
                      results/spice/p3_segmented_driver/rx_noise_jitter_robustness.json \
                      results/spice/p3_segmented_driver/rx_offset_sensitivity.csv \
-                     results/spice/p3_segmented_driver/rx_offset_sensitivity.json
+                     results/spice/p3_segmented_driver/rx_offset_sensitivity.json \
+                     results/spice/p3_segmented_driver/behavioral_cdr_phase_tracking.csv \
+                     results/spice/p3_segmented_driver/behavioral_cdr_phase_tracking.json
           if ! git diff --cached --quiet; then
             git commit -m "results: archive verified MOS driver DC, PVT and transient metrics"
             git fetch origin main
