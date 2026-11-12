@@ -1,0 +1,38 @@
+name: P3 physical MOS receiver phase servo genuine bad-start challenge
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/p3_mos_phase_servo_challenge.py'
+      - '.github/workflows/p3_mos_phase_servo_challenge.yml'
+permissions:
+  contents: read
+jobs:
+  challenge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        shift: [-0.05, 0.95]
+        gain: [-400.0, -200.0, -80.0, 0.0, 80.0, 200.0, 400.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify DB HiTek model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Challenge RX-data detector and physically tunable MOS clock delay at known bad phase
+        run: python3 scripts/p3_mos_phase_servo_challenge.py --shift ${{ matrix.shift }} --gain ${{ matrix.gain }}
+      - name: Preserve all realistic physical MOS latches and controller measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-MOS-phase-feedback-challenge-${{ matrix.shift }}-${{ matrix.gain }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_MOS_phase_servo_challenge/
