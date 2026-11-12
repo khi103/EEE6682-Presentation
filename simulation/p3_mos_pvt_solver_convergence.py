@@ -18,6 +18,8 @@ import argparse,json,re
 from pathlib import Path
 import p3_real_mos_bias_full_pvt as BASE
 import p3_pll_extended_pvt_phase as P
+import p3_transistor_driver as TX
+import p3_xspice_physical_mos_pll as PLL
 
 DESIGNS=BASE.DESIGNS
 VARIANTS=("default_3ps","trap_2ps","trap_1ps","gear_3ps")
@@ -44,13 +46,23 @@ def run(out,design,variant):
         record=BASE.run(out/variant,design,CORNER,TEMP_C,VDD)
     finally:
         P.deck=before
+    raw_wave=TX.ENGINE_DIR/"p3_PLL_extended_PVT_ss_tplus85_v1p71"/"physical_pll.csv"
+    try:
+        last_ns=PLL.read(raw_wave)[-1]["time_s"]*1e9
+    except Exception:
+        last_ns=None
+    full=last_ns is not None and last_ns>=P.SIM_NS-.2
     report={
       "design":design,"PVT":"SS 85C 1.71V","transient_solver":variant,
       "topology_and_MOS_bias_unchanged":True,
+      "recorded_transient_end_ns":last_ns,
+      "full_1200ns_transient_complete":full,
       "phase_std_ps":record["reference_phase_std_ps"],
       "frequency_window_span_MHz":record["last_disjoint_window_freq_drift_MHz"],
       "reference_slips":record["last_reference_cycle_slips"],
-      "electrical_screen_pass":record["electrical_screen_passed"],
+      "electrical_screen_pass":bool(full and record["electrical_screen_passed"]),
+      "numeric_failure_class":("premature_transient_or_missing_waveform" if not full else
+                               "complete_but_electrical_limit_failed" if not record["electrical_screen_passed"] else "passed"),
       "numerically_robust_global_design_proven":False,
       "original_P3_silicon":False,
     }
@@ -60,7 +72,8 @@ def run(out,design,variant):
           f"phaseSTD_ps={record['reference_phase_std_ps']} "
           f"threeWindowDrift_MHz={record['last_disjoint_window_freq_drift_MHz']} "
           f"no_slips={record['last_reference_cycle_slips']==0} "
-          f"electricalPASS={record['electrical_screen_passed']}",flush=True)
+          f"electricalPASS={report['electrical_screen_pass']} "
+          f"complete={full} last_ns={last_ns} class={report['numeric_failure_class']}",flush=True)
     return report
 
 if __name__=="__main__":
