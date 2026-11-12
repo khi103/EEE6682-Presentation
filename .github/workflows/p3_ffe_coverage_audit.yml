@@ -1,0 +1,35 @@
+name: P3 audit held-out one-sample-per-UI MOS FFE evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/audit_physical_mos_ffe_coverage.py'
+      - '.github/workflows/p3_ffe_coverage_audit.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch original physical MOS FFE four-case waveforms
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 43171287092
+          pattern: p3-mos-reference-pll-FFE-ablation-alpha-*
+          merge-multiple: true
+          path: physical_input/
+      - name: Audit missing/duplicate samples with shared trained lag and heldout PRBS bits
+        run: python3 scripts/audit_physical_mos_ffe_coverage.py --in-dir physical_input/
+      - name: Save original immutable-waveform audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-mos-ffe-heldout-coverage-audit
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/audit/p3_ffe_heldout/
