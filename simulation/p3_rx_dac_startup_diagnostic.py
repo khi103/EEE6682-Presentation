@@ -25,10 +25,10 @@ def decks():
             "RREFDAC vref_base vref_rx 3000\n"
             "CREFTRIM vref_rx 0 100f ic=.28")
     extra=[
-       f"VTRIM{w} trim{w} 0 DC {0.5 if 9&w else 0}"
+       f"VRXTRIM{w} rxtrim{w} 0 DC {0.5 if 9&w else 0}"
        for w in (1,2,4,8)]
     extra.extend([
-      f"XNREFTRIM{w} vref_rx trim{w} 0 0 nch_svt_1p8v width=.48u length=.36u multi={w}"
+      f"XNREFTRIM{w} vref_rx rxtrim{w} 0 0 nch_svt_1p8v width=.48u length=.36u multi={w}"
       for w in (1,2,4,8)])
     cases={
         "ideal_reference_baseline":base,
