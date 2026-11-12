@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'simulation/p3_4xor_cdr_gain_robustness.py'
+      - 'simulation/p3_xspice_4xor_mos_cdr.py'
       - '.github/workflows/p3_4xor_cdr_gain_robustness.yml'
 permissions:
   contents: read
