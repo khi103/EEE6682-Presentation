@@ -1,0 +1,37 @@
+name: P3 Fig20 physical MOS charge pump current DAC
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_fig20_charge_pump_mos.py'
+      - '.github/workflows/p3_fig20_charge_pump.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  pump:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Model smoke test
+        run: |
+          bash scripts/run_dbhitek_smoke.sh
+          python3 scripts/validate_dbhitek_inverter.py
+      - name: Simulate Fig20-inspired MOS current DAC in TT FF SS FS SF
+        run: python3 simulation/p3_fig20_charge_pump_mos.py
+      - name: Upload derived figures and data (no model source)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-fig20-mos-charge-pump-current
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_fig20_charge_pump/
