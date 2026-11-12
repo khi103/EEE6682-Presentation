@@ -46,6 +46,30 @@ def check(out):
     assert 0<baseline["driver_signal_supply_mean_mW"]<10
     assert 0<ffe["driver_signal_supply_mean_mW"]<10
     assert all(math.isfinite(k) for k in z)
+    operating=[float(r["rout_ohm_at_loaded_operating_point"]) for r in levels]
+    assert all(0 < x < 300 for x in operating)
+    assert min(operating) < min(z)-5, (
+        "Expected physical nonlinear Rout variation at actual pad voltages"
+    )
+    authority=json.loads((out/"gate_bias_authority.json").read_text())
+    assert authority["status"]=="simulated_independent_gate_bias_control_authority"
+    assert authority["ngspice_calls"]>=60
+    assert set(authority["per_corner"])=={"tt","ff","ss","fs","sf"}
+    assert authority["per_corner"]["ff"]["crosses_50_ohm_in_tested_bias_range"]
+    assert not authority["per_corner"]["ss"]["crosses_50_ohm_in_tested_bias_range"]
+    noise=json.loads((out/"rx_noise_jitter_robustness.json").read_text())
+    assert noise["status"]=="synthetic_receiver_noise_jitter_study"
+    comparison=noise["comparison_10ps_12mV"]
+    assert (comparison["baseline"]["empirical_error_fraction"] >
+            comparison["ffe_alpha_0p30"]["empirical_error_fraction"])
+    extra=read(out/"rx_noise_jitter_robustness.csv")
+    assert len(extra)==2*len(noise["noise_rms_mV"])*len(noise["jitter_rms_ps"])
+    print(f"PASS: Extended impedance at operating point, gate-bias authority, and "
+          f"synthetic RX noise/jitter sensitivity")
+    print(f"Operating Rout={min(operating):.2f}–{max(operating):.2f} ohm")
+    print(f"Error fraction at J=10ps, N=12mV: "
+          f"{comparison['baseline']['empirical_error_fraction']:.6g} -> "
+          f"{comparison['ffe_alpha_0p30']['empirical_error_fraction']:.6g}")
     print(f"PASS: P3 reconstructed MOS driver, 16 output codes, {len(pvt)} PVT points, transient eye/supply")
     print(f"Rout TT={min(z):.3f}...{max(z):.3f} ohm; code7 FF/TT/SS={get('ff',7):.3f}/{get('tt',7):.3f}/{get('ss',7):.3f}")
     print(f"Eye @ common 1.20UI: {baseline['rx_eye_at_common_1p20_UI_mV']:.3f} -> {ffe['rx_eye_at_common_1p20_UI_mV']:.3f} mV")
