@@ -1,0 +1,43 @@
+name: P3 physical PMOS and NMOS bidirectional receiver offset servo
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_bidirectional_mos_rx_offset.py'
+      - '.github/workflows/p3_bidirectional_mos_rx_offset.yml'
+permissions:
+  contents: read
+jobs:
+  two-way-offset:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        base: [0.22,0.25,0.28,0.30]
+        gain: [0.0,0.0001]
+        alpha: [0.0,0.3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice/XSPICE
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify preexisting 180nm MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Check physical PMOS sourcing and NMOS sinking RX calibration against positive and negative offset
+        run: >
+          python3 simulation/p3_bidirectional_mos_rx_offset.py
+          --base ${{ matrix.base }}
+          --gain ${{ matrix.gain }}
+          --alpha ${{ matrix.alpha }}
+      - name: Retain all signed-offset MOS convergence and failing cases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-bidirectional-RX-offset-${{ matrix.base }}-${{ matrix.gain }}-${{ matrix.alpha }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_bidirectional_RX_reference/
