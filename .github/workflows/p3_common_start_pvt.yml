@@ -1,0 +1,43 @@
+name: P3 global MOS PLL start-up voltage basin vs PVT
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_common_start_pvt.py'
+      - '.github/workflows/p3_common_start_pvt.yml'
+permissions:
+  contents: read
+jobs:
+  corner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        corner: [tt, ff, ss, fs, sf]
+        scale: [0.825, 0.85, 0.875]
+        start: [0.90, 1.02, 1.10]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private MOS foundry model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Simulate physical MOS switched-pump PLL with common start voltage
+        run: >
+          python3 simulation/p3_common_start_pvt.py
+          --corner ${{ matrix.corner }}
+          --scale ${{ matrix.scale }}
+          --start ${{ matrix.start }}
+      - name: Retain passing and failing PVT reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MOS-common-start-${{ matrix.corner }}-${{ matrix.scale }}-${{ matrix.start }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_common_start_MOS_PLL/
