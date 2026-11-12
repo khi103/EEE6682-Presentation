@@ -220,14 +220,18 @@ def ffe_codes(bits: list[int], alpha: float) -> list[int]:
         prev = b
     return codes
 
-def pwl_gate(name: str, node: str, levels: list[float]) -> list[str]:
-    # Step at the UI boundary with symmetric 2-ps ideal input edges.
+def pwl_gate(name: str, node: str, levels: list[float],
+             transition_ps: float = 2.0) -> list[str]:
+    # Gate 10%-90% slew is NOT the original paper's control circuit.
+    # This is a parametric, ideal, symmetric linear PWL gate ramp.
+    if not 0 < transition_ps < UI_PS:
+        raise ValueError("Gate transition time must be positive and less than one UI")
     dt = UI_PS
     points = [(0.0, levels[0])]
     for n in range(1, len(levels)):
         t = n*dt
-        points.append((t-1.0, levels[n-1]))
-        points.append((t+1.0, levels[n]))
+        points.append((t-transition_ps/2, levels[n-1]))
+        points.append((t+transition_ps/2, levels[n]))
     points.append((len(levels)*dt, levels[-1]))
     lines = [f"{name} {node} 0 PWL("]
     for t, v in points:
@@ -235,10 +239,11 @@ def pwl_gate(name: str, node: str, levels: list[float]) -> list[str]:
     lines[-1] += ")"
     return lines
 
-def make_transient(codes: list[int], wu: float, wd: float, corner="tt") -> str:
+def make_transient(codes: list[int], wu: float, wd: float, corner="tt",
+                   gate_transition_ps: float = 2.0) -> str:
     lines = [
         "* NONEXACT P3 NMOS-only TX reconstruction and surrogate channel",
-        "* Ideal 2 ps gate controls; no real predriver, calibration loop or PLL.",
+        f"* Ideal gate PWL rise/fall={gate_transition_ps}ps; no actual control loop/PLL.",
         f'.include "db180_svt018_{corner}.lib"',
         ".temp 27",
         f"VSUP vs 0 {V_SIGNAL}",
@@ -255,8 +260,8 @@ def make_transient(codes: list[int], wu: float, wd: float, corner="tt") -> str:
     for w in WEIGHTS:
         up = [V_GATE if (c&w) else 0.0 for c in codes]
         dn = [0.0 if (c&w) else V_GATE for c in codes]
-        lines += pwl_gate(f"VGU{w}",f"gu{w}",up)
-        lines += pwl_gate(f"VGD{w}",f"gd{w}",dn)
+        lines += pwl_gate(f"VGU{w}",f"gu{w}",up,gate_transition_ps)
+        lines += pwl_gate(f"VGD{w}",f"gd{w}",dn,gate_transition_ps)
         lines += [
             f"XPU{w} vs gu{w} pad 0 nch_svt_1p8v width={wu:.10g}u length={L_UM}u multi={w}",
             f"XPD{w} pad gd{w} 0 0 nch_svt_1p8v width={wd:.10g}u length={L_UM}u multi={w}",
