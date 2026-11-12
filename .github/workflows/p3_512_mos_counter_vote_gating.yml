@@ -1,0 +1,57 @@
+name: P3 physical MOS seven-bit counter drift and vote-gating ablation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_512_mos_counter_vote_gating.py'
+      - '.github/workflows/p3_512_mos_counter_vote_gating.yml'
+permissions:
+  contents: read
+jobs:
+  counter-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { seed: '0x54C4EE17', phase: -0.05, mode: 'original' }
+          - { seed: '0x54C4EE17', phase: -0.05, mode: 'collision' }
+          - { seed: '0x54C4EE17', phase: -0.05, mode: 'transition' }
+          - { seed: '0x54C4EE17', phase: -0.05, mode: 'both' }
+          - { seed: '0x54C4EE17', phase: 0.95, mode: 'original' }
+          - { seed: '0x54C4EE17', phase: 0.95, mode: 'collision' }
+          - { seed: '0x54C4EE17', phase: 0.95, mode: 'transition' }
+          - { seed: '0x54C4EE17', phase: 0.95, mode: 'both' }
+          - { seed: '0x13572468', phase: -0.05, mode: 'original' }
+          - { seed: '0x13572468', phase: -0.05, mode: 'collision' }
+          - { seed: '0x13572468', phase: -0.05, mode: 'transition' }
+          - { seed: '0x13572468', phase: -0.05, mode: 'both' }
+          - { seed: '0x13572468', phase: 0.95, mode: 'original' }
+          - { seed: '0x13572468', phase: 0.95, mode: 'collision' }
+          - { seed: '0x13572468', phase: 0.95, mode: 'transition' }
+          - { seed: '0x13572468', phase: 0.95, mode: 'both' }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE-enabled ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify authorized 180nm device models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test actual physical MOS 7bit data CDR counter vote qualifiers
+        run: >
+          python3 simulation/p3_512_mos_counter_vote_gating.py
+          --seed ${{ matrix.seed }}
+          --phase ${{ matrix.phase }}
+          --mode ${{ matrix.mode }}
+      - name: Preserve negative results and Counter states
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: physical-MOS-CDR-vote-${{ matrix.seed }}-${{ matrix.phase }}-${{ matrix.mode }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_mos_counter_vote_gating/
