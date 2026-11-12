@@ -1,0 +1,35 @@
+name: P3 fair-shared-frame 1024bit MOS CDR independent source audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/p3_audit_1024_common_frame.py'
+      - '.github/workflows/p3_audit_1024_common_frame.yml'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  fair-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all 16 immutable physical 1024bit MOS latch samples
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 43261667642
+          pattern: p3-1024bit-mos-CDR-*
+          merge-multiple: true
+          path: original_MOS_CDR_evidence/
+      - name: Fit one shared frame per seed/phase and re-score without changing physical simulation
+        run: python3 scripts/p3_audit_1024_common_frame.py --in-dir original_MOS_CDR_evidence/
+      - name: Retain transparent bit error and duplicate coverage evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-1024bit-fair-MOS-CDR-common-frame-audit
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/audit/p3_MOS1024_shared_lag/
