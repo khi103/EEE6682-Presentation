@@ -22,7 +22,7 @@ import p3_mos_vco_frequency_feedback as FLL
 START_DATA_NS=555.
 TARGET_F_GHZ=1.8
 BIAS_INITIAL=1.0
-EDGE_REFERENCE_SCALE=1.761000
+EDGE_REFERENCE_SCALE=1.752000
 K_FLL=3e-3
 C_FLL=20e-12
 BITS=128
@@ -103,7 +103,7 @@ def run(out):
           "GHz, FLL near 1.8GHz =",outcome["fll_near_target"],
           "physical RX offline-aligned errors=",
           decoded["errors"],"/",decoded["bits_compared"],flush=True)
-    if outcome["fll_near_target"] and decoded["errors"]==0:
+    if outcome["fll_near_target"] and decoded["errors"]==0 and decoded["unresolved_samples"]==0:
         print("PASS: in-SPICE FLL-driven real MOS VCO clocks the MOS TX/RC/RX link",flush=True)
     else:
         print("FAIL: Combined frequency feedback / MOS receiver did not satisfy the 1.8-GHz and zero-sample-error smoke criteria",flush=True)
