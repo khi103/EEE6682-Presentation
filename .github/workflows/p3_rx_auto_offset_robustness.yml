@@ -1,0 +1,57 @@
+name: P3 physical MOS automatic receiver offset calibration signed range
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_rx_auto_offset_robustness.py'
+      - '.github/workflows/p3_rx_auto_offset_robustness.yml'
+permissions:
+  contents: read
+jobs:
+  calibrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - { base: 0.22, gm: 0.0000, alpha: 0.0 }
+          - { base: 0.22, gm: 0.0000, alpha: 0.3 }
+          - { base: 0.22, gm: 0.0001, alpha: 0.0 }
+          - { base: 0.22, gm: 0.0001, alpha: 0.3 }
+          - { base: 0.25, gm: 0.0000, alpha: 0.0 }
+          - { base: 0.25, gm: 0.0000, alpha: 0.3 }
+          - { base: 0.25, gm: 0.0001, alpha: 0.0 }
+          - { base: 0.25, gm: 0.0001, alpha: 0.3 }
+          - { base: 0.28, gm: 0.0000, alpha: 0.0 }
+          - { base: 0.28, gm: 0.0000, alpha: 0.3 }
+          - { base: 0.28, gm: 0.0001, alpha: 0.0 }
+          - { base: 0.28, gm: 0.0001, alpha: 0.3 }
+          - { base: 0.30, gm: 0.0000, alpha: 0.0 }
+          - { base: 0.30, gm: 0.0000, alpha: 0.3 }
+          - { base: 0.30, gm: 0.0001, alpha: 0.0 }
+          - { base: 0.30, gm: 0.0001, alpha: 0.3 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE enabled MOS simulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Confirm existing DB HiTek model available
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test actual MOS current sink reference calibration and RX holdout
+        run: >
+          python3 simulation/p3_rx_auto_offset_robustness.py
+          --base ${{ matrix.base }}
+          --gm ${{ matrix.gm }}
+          --alpha ${{ matrix.alpha }}
+      - name: Preserve all negative and positive physical MOS RX outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-RX-calibration-offset-${{ matrix.base }}-${{ matrix.gm }}-${{ matrix.alpha }}
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/spice/p3_rx_auto_offset_robustness/
