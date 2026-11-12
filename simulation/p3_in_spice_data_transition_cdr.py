@@ -186,11 +186,18 @@ def run(out):
        ]
     }
     (out/"in_spice_data_CDR_summary.json").write_text(json.dumps(report,indent=2)+"\n")
-    if (observations[best]["mos_decisions_from_actual_clock_edges"]["bit_errors_including_unresolved"] <= 5 and
-        observations[best]["mos_vco_frequency_near_target"]):
-        print(f"PASS: in-SPICE data-driven behavioral CDR improved physical MOS RX at {best}",flush=True)
+    qualified=[name for name,x in observations.items()
+       if x["mos_vco_frequency_near_target"] and
+       x["mos_decisions_from_actual_clock_edges"]["bit_errors_including_unresolved"]<=5 and
+       x["mos_decisions_from_actual_clock_edges"]["clock_falling_edges_scored"]>=160]
+    report["verified_in_SPICE_data_CDR_lock"]=bool(qualified)
+    report["passing_controller_cases"]=qualified
+    (out/"in_spice_data_CDR_summary.json").write_text(json.dumps(report,indent=2)+"\n")
+    if qualified:
+        print(f"PASS: in-SPICE data-driven MOS CDR qualified at {qualified}",flush=True)
     else:
-        print("LIMITATION: Data-driven in-SPICE behavioral PD did not lock physical MOS receiver adequately",flush=True)
+        print("FAIL: in-SPICE behavioral PD has NOT locked the real MOS receiver (frequency and <=5 bit errors required)",flush=True)
+        raise AssertionError("Physical in-SPICE data CDR lock not verified; see saved numerical evidence")
     return report
 
 if __name__=="__main__":
