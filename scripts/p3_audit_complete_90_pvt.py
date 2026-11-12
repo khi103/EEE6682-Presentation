@@ -24,7 +24,10 @@ VDDS=(1.71,1.8,1.89)
 def parse(input_dir):
     rows={}
     missing=[]
-    # Every new-grid artifact contains BOTH BASE.run() original report and\n    # a grid wrapper JSON describing the identical simulated PVT case.\n    # Only count one canonical BASE numerical record per physical transient.\n    files=list(input_dir.rglob("*_physical_bias_PVT.json"))
+    # Every new-grid artifact contains BOTH BASE.run() original report and
+    # a grid wrapper JSON describing the identical simulated PVT case.
+    # Count only canonical BASE numerical report per physical transient.
+    files=list(input_dir.rglob("*_physical_bias_PVT.json"))
     if not files:raise RuntimeError("Missing original saved electrical artifacts")
     for p in files:
         obj=json.loads(p.read_text())
