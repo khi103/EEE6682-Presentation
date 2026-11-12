@@ -1,0 +1,35 @@
+name: P3 cross-solver Gear 45-case MOS PLL physical audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/p3_audit_gear45_pvt.py'
+      - '.github/workflows/p3_audit_gear45_pvt.yml'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  audit45:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download immutable Gear full Cartesian PVT MOS simulation artifacts
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 43261343417
+          pattern: p3-gear-45-MOS-PVT-*
+          merge-multiple: true
+          path: actual_gear_MOS_PVT/
+      - name: Require all 45 completed actual MOS transients and independent electrical screening
+        run: python3 scripts/p3_audit_gear45_pvt.py --in-dir actual_gear_MOS_PVT/
+      - name: Preserve independent CSV JSON Markdown and failed corners
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-independent-gear45-MOS-PVT-electrical-audit
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/audit/p3_Gear45_PVT/
