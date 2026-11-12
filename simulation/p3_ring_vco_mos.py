@@ -17,7 +17,7 @@ STAGES=5
 BIAS_N_VALUES=(.65,.85,1.05,1.25,1.45,1.65)
 PVT=("tt","ff","ss")
 RUN_NS=20
-CL_F=8e-15
+CL_F=2e-15
 
 def deck(corner,control):
     pgate=1.8-control
