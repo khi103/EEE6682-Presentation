@@ -26,8 +26,8 @@ UI_S=1/(3.6e9)
 VREF=.25
 GAIN=.15
 FIRST_VALID=55
-EVAL_GAP_UI=.25
-EVAL_WIDTH_UI=.58
+EVAL_GAP_UI=.42
+EVAL_WIDTH_UI=.78
 MIN_RESOLVED_V=.15
 # Only one parameter per scenario is changed. No PRBS bits are passed to the CDR.
 SCENARIOS=(
@@ -229,9 +229,14 @@ def run(out):
     (out/"blind_CDR_mos_latch_summary.json").write_text(json.dumps(report,indent=2)+"\n")
     baseline=results["ffe_initial_0p75_plus_1000ppm"]["mos_latch"]
     control=results["ffe_fixed_initial_0p75_plus_1000ppm"]["mos_latch"]
-    if baseline["total_errors_including_unresolved"]>=control["total_errors_including_unresolved"]:
-        raise AssertionError("Data-only timing tracking did not improve over fixed off-phase clock")
-    print("PASS: Data-transition CDR (without TX labels) improves MOS-latch decisions over open-loop clock",flush=True)
+    nominal=results["ffe_initial_0p05_nominal"]["mos_latch"]
+    if nominal["total_errors_including_unresolved"]>5:
+        raise AssertionError("Nominal CDR MOS receiver failed strict regenerated-output check")
+    if baseline["total_errors_including_unresolved"]>15:
+        raise AssertionError("+1000 ppm CDR receiver has too many resolved/unknown errors")
+    if baseline["total_errors_including_unresolved"]>=control["total_errors_including_unresolved"]-15:
+        raise AssertionError("Data-only timing tracking did not substantially beat fixed off-phase clock")
+    print("PASS: Data-only transition CDR clocks real MOS RX with strict 150mV resolved-output checks",flush=True)
     return report
 
 if __name__=="__main__":
