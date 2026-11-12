@@ -44,8 +44,8 @@ def netlist(bits,code):
     ]
     for w in (1,2,4,8):
         rest.extend([
-          f"VTRIM{w} trim{w} 0 DC {VG_ON if code&w else 0:.9g}",
-          f"XNREFTRIM{w} vref_rx trim{w} 0 0 nch_svt_1p8v "
+          f"VRXTRIM{w} rxtrim{w} 0 DC {VG_ON if code&w else 0:.9g}",
+          f"XNREFTRIM{w} vref_rx rxtrim{w} 0 0 nch_svt_1p8v "
           f"width=.48u length=.36u multi={w}",
         ])
     deck=deck.replace(original,"\n".join(rest),1)
