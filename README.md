@@ -171,3 +171,34 @@ PWL source generated between separate MOS simulations. The physical
 VCO / B-source phase-detector same-netlist experiments are tracked
 separately, and should not be advertised as a locked data CDR unless
 their quantitative clock-frequency and MOS-latch tests also pass.
+
+
+## NEW: Fig.19-style four-XOR / seven-bit MOS-pump-informed CDR (Nov. 12)
+
+[Actual passing 512-bit DB HiTek MOS validation](https://github.com/khi103/EEE6682-Presentation/actions/runs/43159596701)
+uses the architecture described by Wong et al., Fig. 19: Edge/Data
+samples, four-XOR Up/Down arbitration, downsampling and a seven-bit
+saturating phase counter. The controller is **causal but runs in Python**.
+It uses a transistor-characterized 7-bit MOS charge-pump DC-current
+lookup, converted to assumed clock phase shifts using the paper's
+measured 350-ps range. The resulting clock is then an **ideal PWL source**
+which drives **physical 180nm MOS regenerative receiver latches**.
+
+Under a +1000-ppm nominal clock error and unfavorable starting counter
+127, **CDR OFF: 30/378 unresolved-or-incorrect MOS samples** versus
+**CDR ON: 0/378**, with **all 378 output samples regenerated >=150mV**.
+Seven other CDR-on settings also achieved 0/378 over the same PRBS.
+Data labels were **not used for any up/down phase control**; PRBS was
+used after the transistor simulation solely for word alignment/scoring.
+
+- [Full MOS BBPD testbench](simulation/p3_fig19_bbpd_mos_cosim.py)
+- [Detailed Korean methodology and explicit limits](docs/P3_Fig19_BBPD_MOS_수신검증_20261112.md)
+- [Automated validation workflow](.github/workflows/p3_fig19_bbpd_mos.yml)
+
+**An actual one-SPICE physical phase-locked data recovery loop has still
+NOT locked.** The separate same-netlist B-source edge detector connected
+to the physical MOS TX/RX/VCO fails frequency-plus-recovered-data
+qualification across the tested gains. That experiment should be treated
+as a physical/control design shortcoming, NOT as an achieved PLL/CDR.
+The verified Fig19 case uses a two-pass MOS/behavioral co-simulation
+and an assumed current-to-phase transfer function.
