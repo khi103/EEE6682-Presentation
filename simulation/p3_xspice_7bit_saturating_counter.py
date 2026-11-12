@@ -35,7 +35,7 @@ def generate_table(path):
         output=" ".join(("1s" if q & (1<<i) else "0s") for i in range(7))
         transitions=[]
         for up,dn in ((0,0),(0,1),(1,0),(1,1)):
-            transitions.append((f"{up}{dn}",update(q,up,dn)))
+            transitions.append((f"{up} {dn}",update(q,up,dn)))
         for index,(vote,dest) in enumerate(transitions):
             if index==0:
                 lines.append(f"{q} {output} {vote} -> {dest}")
@@ -97,7 +97,7 @@ def main(out):
     run=subprocess.run(["ngspice","-b",circuit.name],cwd=out,
                        capture_output=True,text=True,timeout=120)
     (out/"ngspice_output.txt").write_text(run.stdout+"\n"+run.stderr)
-    if run.returncode!=0:
+    if (run.returncode!=0 or "D_STATE: state file was not read successfully." in (run.stdout+run.stderr) or "\nERROR\n" in (run.stdout+run.stderr)):
         raise RuntimeError(f"ngspice failed: {run.stderr[-2200:]} {run.stdout[-1600:]}")
     results=read(out/"counter.csv")
     before=[x for x in results if x[0]<2e-9]
