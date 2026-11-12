@@ -1,0 +1,35 @@
+name: P3 audit PRBS31 MOS FFE one sample per UI
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/audit_prbs31_physical_ffe_coverage.py'
+      - '.github/workflows/p3_prbs31_ffe_coverage_audit.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch long PRBS31 physical MOS receiver evidence
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 43173360810
+          pattern: p3-long-prbs31-physical-mos-ffe-alpha-*
+          merge-multiple: true
+          path: physical_input/
+      - name: Audit unseen bits and missing/duplicate UI coverage
+        run: python3 scripts/audit_prbs31_physical_ffe_coverage.py --in-dir physical_input/
+      - name: Preserve corrected results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-long-prbs31-mos-FFE-heldout-audit
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/audit/p3_prbs31_mos_ffe_heldout/
