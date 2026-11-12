@@ -1,0 +1,32 @@
+name: P3 blind data-transition CDR physically clocks DB HiTek MOS RX
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_blind_cdr_mos_cosim.py'
+      - '.github/workflows/p3_blind_cdr_mos_cosim.yml'
+permissions:
+  contents: read
+jobs:
+  blind-cdr:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Two-pass data-blind CDR and real MOS receiver sampling
+        run: python3 simulation/p3_blind_cdr_mos_cosim.py
+      - name: Preserve recovery decisions including failures, without foundry PDK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-blind-transition-cdr-mos-receiver-evidence
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_blind_cdr/
