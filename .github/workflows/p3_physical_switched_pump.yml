@@ -1,0 +1,32 @@
+name: P3 actual switched MOS charge pump 450MHz PVT
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_physical_switched_charge_pump.py'
+      - '.github/workflows/p3_physical_switched_pump.yml'
+permissions:
+  contents: read
+jobs:
+  switched-pump:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Model smoke test
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Simulate physical 450MHz MOS switch + seven-bit weighted current source
+        run: python3 simulation/p3_physical_switched_charge_pump.py
+      - name: Upload PVT current / switching waveforms without PDK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-450mhz-physical-mos-switched-charge-pump
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_switched_charge_pump/
