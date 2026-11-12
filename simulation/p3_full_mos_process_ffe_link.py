@@ -85,6 +85,15 @@ def run(out,corner,alpha):
         bits=LONG.prbs31(BITS,SEED)
         runner.run(netlist(bits,corner,alpha),name)
         rows=LINK.read(work/"pll_driven_rx_wave.csv")
+        expected_ns=LINK.START_DATA_NS + BITS*TX.UI_PS*1e-3 + LINK.DATA_END_DELAY_NS
+        actual_ns=rows[-1]["time_s"]*1e9
+        report["expected_simulation_end_ns"]=expected_ns
+        report["actual_simulation_end_ns"]=actual_ns
+        report["transient_complete"]=actual_ns>=expected_ns-0.20
+        if not report["transient_complete"]:
+            raise RuntimeError("INCOMPLETE_NGSPICE_TRANSIENT: waveform stops at "
+                               f"{actual_ns:.6f} ns, needs {expected_ns:.6f} ns; "
+                               "full-packet MOS bit-error counts are invalid")
         pll=LINK.frequency(rows)
         samples,raw=LINK.evaluate(rows,bits,LINK.START_DATA_NS)
         coverage=SCORE.score(samples,bits)
