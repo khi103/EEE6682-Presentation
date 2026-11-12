@@ -1,0 +1,50 @@
+{
+  "source": "Exact unchanged lecturer sim3_ffe.py in private serdes-lecture-site fork",
+  "run_url": "https://github.com/khi103/serdes-lecture-site/actions/runs/43142270060",
+  "data_rate_Gbps": 56,
+  "original_channel": "lecturer FR4-like channel response, not P3 channel",
+  "results": {
+    "none": {
+      "eye_height_mV": -130.2171,
+      "eye_width_UI": 0,
+      "ffe_taps": null
+    },
+    "3tap_1pre": {
+      "eye_height_mV": 70.57716,
+      "eye_width_UI": 0.65625,
+      "ffe_taps": [
+        -0.13687183831854802,
+        0.5594191464925444,
+        -0.30370901518890747
+      ]
+    },
+    "5tap_1pre": {
+      "eye_height_mV": 72.88779,
+      "eye_width_UI": 0.71875,
+      "ffe_taps": [
+        -0.12812475831140024,
+        0.5236512228463228,
+        -0.2943077670615231,
+        0.04093871437332608,
+        -0.012977537407427762
+      ]
+    },
+    "9tap_2pre": {
+      "eye_height_mV": 74.83976,
+      "eye_width_UI": 0.71875,
+      "ffe_taps": [
+        0.03466947205666326,
+        -0.14186730623496932,
+        0.4916818570160519,
+        -0.2757073525322701,
+        0.037806636573720215,
+        -0.011763477081755023,
+        -0.0021955725112193314,
+        -0.0022768788433283316,
+        -0.0020314471500225773
+      ]
+    }
+  },
+  "controls": "All lecturer original FFE values normalized to sum(abs(c))=1.",
+  "comparison_limit": "Not directly comparable to 3.6Gb/s paper due to different channel/bit rate/output swing"
+}
