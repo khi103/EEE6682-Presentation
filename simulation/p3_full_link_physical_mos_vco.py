@@ -108,6 +108,18 @@ def phase_search(rows,bits):
                 result=candidate
     return result
 
+def time_weighted_power_mW(rows, branch, supply_V):
+    # Sign convention: current into voltage source is negative when supplying power.
+    total_charge=0.
+    for a,b in zip(rows,rows[1:]):
+        dt=b["time_s"]-a["time_s"]
+        if dt<0:raise ValueError("Negative simulation time increment")
+        total_charge += .5*(a[branch]+b[branch])*dt
+    dur=rows[-1]["time_s"]-rows[0]["time_s"]
+    if dur<=0:raise ValueError("Empty transient duration")
+    return -total_charge/dur*supply_V*1000.
+
+
 def run(out):
     out.mkdir(parents=True,exist_ok=True)
     work=TX.ENGINE_DIR/"p3_integrated_physical_vco"
@@ -144,7 +156,9 @@ def run(out):
         if label=="ffe_0p30":
             LINK.save_csv(out/"integrated_mos_vco_ffe_waveform.csv",wave)
         cases[label]={"vco_frequency_GHz":f.get("frequency_GHz"),
-            "free_running_vco":f,"physical_RX_latch":decisions}
+            "free_running_vco":f,"physical_RX_latch":decisions,
+            "transistor_vdd_1p8V_source_power_mW":time_weighted_power_mW(wave,"vdd_A",1.8),
+            "transistor_tx_signaling_0p5V_source_power_mW":time_weighted_power_mW(wave,"tx_A",.5)}
         print(f"ONE SPICE physical TX+VCO+RX {label}: frequency={f.get('frequency_GHz')} GHz; "
              f"min errors (offline phase training)={decisions['errors']}/{decisions['bits_compared']}",flush=True)
     report={
@@ -155,6 +169,7 @@ def run(out):
        "target_half_rate_GHz":1.8,"calibration":calibration,
        "final_bias_V":bias,"cases":cases,
        "ngspice_runs":runner.calls,
+       "power_scope":"Includes MOS VCO, RX latches and 0.5-V TX output-stage sources; excludes ideal TX gate drive, source termination reference and any PLL/PFD bias sources",
        "known_missing":[
           "No physical PFD/charge pump filter feedback connected to VCO",
           "No real-time CDR or BER estimation; test pattern used to train phase offline",
