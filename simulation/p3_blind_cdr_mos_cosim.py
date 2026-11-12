@@ -125,40 +125,62 @@ def generate_latch_deck(bits,alpha,schedule,corner="tt"):
     return src
 
 def analyze_latches(wave,schedule,bits):
+    """Score already clocked MOS decisions, with INTEGER packet delay only.
+
+    The known TX PRBS is used here solely for post-simulation numerical
+    alignment/scoring. It NEVER enters phase recovery or recovered clocks.
+    Real receivers would need a separate framing/sync protocol.
+    """
     times=[r["time_s"] for r in wave]
     decisions=[]
-    for entry in schedule[FIRST_VALID:N_BITS-8]:
+    # Same 187 symbols in every packet-alignment candidate.
+    for entry in schedule[FIRST_VALID+3:N_BITS-11]:
         n=entry["bit_clock_cycle_index"]
-        t=entry["recovered_sample_time_s"]
+        ts=entry["recovered_sample_time_s"]
         even=(n%2==0)
-        node="qeven_V" if even else "qodd_V"
-        nodeb="qbeven_V" if even else "qbodd_V"
-        q=LINK.interp(wave,t,node,times)
-        qb=LINK.interp(wave,t,nodeb,times)
-        inp=LINK.interp(wave,t,"rx_V",times)
+        q=LINK.interp(wave,ts,"qeven_V" if even else "qodd_V",times)
+        qb=LINK.interp(wave,ts,"qbeven_V" if even else "qbodd_V",times)
+        inp=LINK.interp(wave,ts,"rx_V",times)
         diff=q-qb
         resolved=math.isfinite(diff) and abs(diff)>=MIN_RESOLVED_V
         bit=int(diff>0) if math.isfinite(diff) else None
-        correct=resolved and bit==bits[n]
         decisions.append({
-            "cycle_index":n,"sample_time_s":t,"true_bit_FOR_SCORING_ONLY":bits[n],
+            "cycle_index":n,"sample_time_s":ts,
             "recovered_mos_bit":bit,"rx_V":inp,"latch_q_V":q,
             "latch_qb_V":qb,"latch_differential_V":diff,
-            "resolved_at_150mV":int(resolved),"correct_and_resolved":int(correct),
+            "resolved_at_150mV":int(resolved),
             "phase_mod_UI":entry["phase_mod_UI"],
+            "phase_unwrapped_UI":entry["phase_unwrapped_UI"],
         })
-    errors=sum(1-x["correct_and_resolved"] for x in decisions)
-    unresolved=sum(1-x["resolved_at_150mV"] for x in decisions)
-    errors_polarity=sum(x["resolved_at_150mV"] and
-         x["recovered_mos_bit"]!=x["true_bit_FOR_SCORING_ONLY"] for x in decisions)
+    lags=[]
+    for lag in range(-3,4):
+        errors=0
+        for row in decisions:
+            expected=bits[row["cycle_index"]+lag]
+            errors+=int(not row["resolved_at_150mV"] or row["recovered_mos_bit"]!=expected)
+        lags.append({"integer_PRBS_lag_for_scoring_only":lag,"errors":errors})
+    best=min(lags,key=lambda x:(x["errors"],abs(x["integer_PRBS_lag_for_scoring_only"])))
+    lag=best["integer_PRBS_lag_for_scoring_only"]
+    for row in decisions:
+        expected=bits[row["cycle_index"]+lag]
+        row["true_bit_FOR_SCORING_ONLY"]=expected
+        row["integer_PRBS_lag_FOR_SCORING_ONLY"]=lag
+        row["correct_and_resolved"]=int(bool(row["resolved_at_150mV"])
+                                        and row["recovered_mos_bit"]==expected)
+    errors=sum(1-row["correct_and_resolved"] for row in decisions)
+    unresolved=sum(1-row["resolved_at_150mV"] for row in decisions)
+    resolved_wrong=sum(row["resolved_at_150mV"] and
+        row["recovered_mos_bit"]!=row["true_bit_FOR_SCORING_ONLY"] for row in decisions)
     return decisions,{
         "evaluated_bits":len(decisions),
         "total_errors_including_unresolved":errors,
         "unresolved_latch_samples":unresolved,
-        "resolved_wrong_bits":errors_polarity,
+        "resolved_wrong_bits":resolved_wrong,
+        "integer_packet_alignment_for_validation_only":lag,
+        "lag_errors_for_validation_only":lags,
         "error_fraction":errors/len(decisions),
         "mean_abs_latch_differential_mV":
-          sum(abs(x["latch_differential_V"]) for x in decisions)/len(decisions)*1000.,
+          sum(abs(row["latch_differential_V"]) for row in decisions)/len(decisions)*1000.,
     }
 
 def save_csv(path,entries):
@@ -220,7 +242,7 @@ def run(out):
       "notes":[
         "Two SPICE passes with Python time-stamped data transition replay; not simultaneous PFD/VCO feedback",
         "The regenerated recovered clocks are ideal PWL voltage sources, not the MOS VCO",
-        "The 1-UI channel latency is an independent testbench assumption",
+        "The 1-UI channel latency is assumed; PRBS labels are used only after simulation to align an integer packet delay for scoring",
         "Scoring uses transmitted PRBS only after both simulation passes",
         "Never claim a physical 2004 Fig19 BBPD, original PLL, actual FR4/RG58, or BER <1e-12"
       ],
