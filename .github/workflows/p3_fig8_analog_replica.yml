@@ -1,0 +1,39 @@
+name: P3 Fig8 analog replica feedback with 180nm MOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_fig8_analog_replica_loop.py'
+      - '.github/workflows/p3_fig8_analog_replica.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  run-analog-replica-loop:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify authorized model works in this isolated runner
+        run: |
+          bash scripts/run_dbhitek_smoke.sh
+          python3 scripts/validate_dbhitek_inverter.py
+      - name: Simulate dual feedback MOS replicas in TT FF SS FS SF
+        run: python3 simulation/p3_fig8_analog_replica_loop.py
+      - name: Upload MOS/loop output, NOT foundry models
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-fig8-analog-mos-servo-evidence
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            results/spice/p3_segmented_driver/fig8_analog_servo_waveforms.csv
+            results/spice/p3_segmented_driver/fig8_analog_servo_summary.json
