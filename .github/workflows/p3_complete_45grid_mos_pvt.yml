@@ -1,0 +1,90 @@
+name: P3 physical diode-biased MOS PLL complete 5x3x3 PVT grid
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_complete_45grid_mos_pvt.py'
+      - '.github/workflows/p3_complete_45grid_mos_pvt.yml'
+permissions:
+  contents: read
+jobs:
+  physical-grid:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 14
+      matrix:
+        include:
+          - { design: diode_w16_r4k, corner: tt, temp: -20, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: tt, temp: -20, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: tt, temp: 85, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: tt, temp: 85, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: ff, temp: -20, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: ff, temp: -20, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: ff, temp: 85, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: ff, temp: 85, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: ss, temp: -20, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: ss, temp: -20, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: ss, temp: 85, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: ss, temp: 85, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: fs, temp: -20, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: fs, temp: -20, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: fs, temp: 27, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: fs, temp: 27, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: fs, temp: 85, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: fs, temp: 85, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: sf, temp: -20, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: sf, temp: -20, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: sf, temp: 27, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: sf, temp: 27, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: sf, temp: 85, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: sf, temp: 85, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: tt, temp: -20, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: tt, temp: -20, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: tt, temp: 85, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: tt, temp: 85, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: ff, temp: -20, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: ff, temp: -20, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: ff, temp: 85, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: ff, temp: 85, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: ss, temp: -20, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: ss, temp: -20, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: ss, temp: 85, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: ss, temp: 85, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: fs, temp: -20, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: fs, temp: -20, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: fs, temp: 27, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: fs, temp: 27, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: fs, temp: 85, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: fs, temp: 85, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: sf, temp: -20, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: sf, temp: -20, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: sf, temp: 27, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: sf, temp: 27, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: sf, temp: 85, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: sf, temp: 85, vdd: 1.89 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice and unzip
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify licensed model in existing repository without adding model bytes
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Check missing combinations of fixed physical MOS reference PLL PVT grid
+        run: >
+          python3 simulation/p3_complete_45grid_mos_pvt.py
+          --design ${{ matrix.design }}
+          --corner ${{ matrix.corner }}
+          --temp ${{ matrix.temp }}
+          --vdd ${{ matrix.vdd }}
+      - name: Retain electrical screens including failed cases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-extra-PLL-PVT-${{ matrix.design }}-${{ matrix.corner }}-${{ matrix.temp }}-${{ matrix.vdd }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_complete_45grid_MOS_PVT/
