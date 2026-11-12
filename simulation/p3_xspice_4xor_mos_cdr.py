@@ -72,6 +72,7 @@ def make_deck(bits,gain,shift):
       "AXORDN1 [dD1 dE0] dd1 four_xor",
       ".model four_xor d_xor(rise_delay=8e-12 fall_delay=8e-12 input_load=5e-15)",
       "ABBDAC4 [du0 dd0 du1 dd1] [vup0 vdn0 vup1 vdn1] xdac",
+      "APROBE_DIGITAL [drx dclke dclko dn1 dph2 dD0 dD1 dE0 dE1] [vdrx vdclke vdclko vdn1probe vdph2 vD0 vD1 vE0 vE1] xdac",
       ".model xdac dac_bridge(out_low=0 out_high=1 out_undef=.5 input_load=5e-15 t_rise=5e-12 t_fall=5e-12)",
       # Physical integrating cap, behavioral CMOS gain amplifier/driver.
       f"VPDSET pdstart 0 {START_BIAS}",
@@ -84,7 +85,8 @@ def make_deck(bits,gain,shift):
     tail="quit\n.endc"
     if deck.count(tail)!=1:raise RuntimeError("Wrong control block")
     deck=deck.replace(tail,
-      "wrdata xor_phase_details.csv time v(pdctrl) v(vup0) v(vdn0) v(vup1) v(vdn1) v(rx)\nquit\n.endc",1)
+      "wrdata xor_phase_details.csv time v(pdctrl) v(vup0) v(vdn0) v(vup1) v(vdn1) v(rx)\n"
+      "wrdata xor_digital_inputs.csv time v(vdrx) v(vdclke) v(vdclko) v(vdn1probe) v(vdph2) v(vD0) v(vD1) v(vE0) v(vE1)\nquit\n.endc",1)
     return deck,start
 
 def analyze_logic(path,start_ns,out_path):
@@ -113,6 +115,32 @@ def analyze_logic(path,start_ns,out_path):
       "control_min_V":min(ctrl) if ctrl else None,
       "control_max_V":max(ctrl) if ctrl else None,
       "control_end_V":ctrl[-1] if ctrl else None}
+
+def analyze_digital_stages(path,start_ns,out_path):
+    """0.5V means XSPICE U; locate first ADC/DFF stage stuck undefined."""
+    fields=["RX_adc","clkeven_adc","clkodd_adc","ring_adc","delay_adc",
+            "D0_dff","D1_dff","E0_dff","E1_dff"]
+    stream=[]
+    for line in path.read_text().splitlines():
+        try:a=[float(x) for x in line.split()]
+        except ValueError:continue
+        if len(a)>=20 and all(math.isfinite(x) for x in a):
+            stream.append({"time_s":a[0],**{k:a[3+2*i] for i,k in enumerate(fields)}})
+    if len(stream)<100:raise RuntimeError("No raw digital diagnostic bridge")
+    active=[x for x in stream if x["time_s"]>=start_ns*1e-9]
+    if not active:raise RuntimeError("No digital samples after RX input data")
+    summary={}
+    for key in fields:
+        vals=[x[key] for x in active]
+        summary[key]={
+            "minimum_V":min(vals),"maximum_V":max(vals),
+            "fraction_low_0V":sum(v<.1 for v in vals)/len(vals),
+            "fraction_high_1V":sum(v>.9 for v in vals)/len(vals),
+            "fraction_unknown_0p5V":sum(.4<v<.6 for v in vals)/len(vals)}
+    with out_path.open("w",newline="") as f:
+        w=csv.DictWriter(f,fieldnames=list(stream[0]))
+        w.writeheader();w.writerows(active[::max(1,len(active)//3500)])
+    return summary
 
 def main(out,gain,shift):
     if gain not in GAINS_UA or shift not in SHIFTS:raise ValueError("Preset unsupported")
@@ -144,6 +172,7 @@ def main(out,gain,shift):
         held=SERVO.score_holdout(samples,bits,start)
         pll=LINK.frequency(wave)
         logic=analyze_logic(work/"xor_phase_details.csv",start,out/(label+"_logic_wave.csv"))
+        logic_stages=analyze_digital_stages(work/"xor_digital_inputs.csv",start,out/(label+"_digital_states.csv"))
         result.update({
           "status":"electrical_run",
           "reference_PLL":pll,
@@ -151,6 +180,7 @@ def main(out,gain,shift):
           "heldout_coverage":held,
           "reference_PLL_near_1p8GHz":abs(pll["vco_GHz"]-1.8)<.025,
           "four_XOR_logic_diagnostics":logic,
+          "digital_ADC_DFF_stage_diagnostics":logic_stages,
         })
         with (out/(label+"_physical_MOS_decisions.csv")).open("w",newline="") as f:
             w=csv.DictWriter(f,fieldnames=list(samples[0]))
@@ -165,6 +195,8 @@ def main(out,gain,shift):
           f"holdout_errors={h.get('total_invalid')}/{h.get('expected')} "
           f"wrong={h.get('wrong_regenerated')} "
           f"missed={h.get('missing')} "
+          f"RXADC_U={result.get('digital_ADC_DFF_stage_diagnostics',{}).get('RX_adc',{}).get('fraction_unknown_0p5V')} "
+          f"DFF0_U={result.get('digital_ADC_DFF_stage_diagnostics',{}).get('D0_dff',{}).get('fraction_unknown_0p5V')} "
           f"VCO_GHz={result.get('reference_PLL',{}).get('vco_GHz')}",flush=True)
     return result
 
