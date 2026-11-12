@@ -1,0 +1,33 @@
+name: P3 MOS reference PLL corner, startup and reference-frequency robustness
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_xspice_pll_robustness.py'
+      - '.github/workflows/p3_xspice_pll_robustness.yml'
+permissions:
+  contents: read
+jobs:
+  robustness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE-capable ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+          ngspice --version | head -n 3
+      - name: Verify licensed DB HiTek MOS model inside private CI
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Characterize PVT, startup and reference-frequency lock limits
+        run: python3 simulation/p3_xspice_pll_robustness.py
+      - name: Retain every passing and failing diagnostic outcome
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-xspice-physical-mos-pll-robustness-diagnostics
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_xspice_pll_robustness/
