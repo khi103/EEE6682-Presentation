@@ -1,0 +1,57 @@
+name: P3 1024bit physical MOS 7bit data CDR cross-pattern holdout
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_1024bit_mos_counter_cdr.py'
+      - '.github/workflows/p3_1024bit_mos_counter_cdr.yml'
+permissions:
+  contents: read
+jobs:
+  long-CDR:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { seed: '0x54C4EE17', phase: -0.05, step: 0.0 }
+          - { seed: '0x54C4EE17', phase: -0.05, step: 3.0 }
+          - { seed: '0x54C4EE17', phase: 0.95, step: 0.0 }
+          - { seed: '0x54C4EE17', phase: 0.95, step: 3.0 }
+          - { seed: '0x13572468', phase: -0.05, step: 0.0 }
+          - { seed: '0x13572468', phase: -0.05, step: 3.0 }
+          - { seed: '0x13572468', phase: 0.95, step: 0.0 }
+          - { seed: '0x13572468', phase: 0.95, step: 3.0 }
+          - { seed: '0x2468ACE1', phase: -0.05, step: 0.0 }
+          - { seed: '0x2468ACE1', phase: -0.05, step: 3.0 }
+          - { seed: '0x2468ACE1', phase: 0.95, step: 0.0 }
+          - { seed: '0x2468ACE1', phase: 0.95, step: 3.0 }
+          - { seed: '0x41357268', phase: -0.05, step: 0.0 }
+          - { seed: '0x41357268', phase: -0.05, step: 3.0 }
+          - { seed: '0x41357268', phase: 0.95, step: 0.0 }
+          - { seed: '0x41357268', phase: 0.95, step: 3.0 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice and unzip
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify licensed 180nm MOS library in authorized environment
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Complete physical 1024bit 7bit XSPICE-MOS receiver CDR
+        run: >
+          python3 simulation/p3_1024bit_mos_counter_cdr.py
+          --seed ${{ matrix.seed }}
+          --phase ${{ matrix.phase }}
+          --step ${{ matrix.step }}
+      - name: Preserve complete and failed long PRBS31 MOS CDR evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-1024bit-mos-CDR-${{ matrix.seed }}-${{ matrix.phase }}-${{ matrix.step }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_1024bit_MOS_counter_CDR/
