@@ -1,0 +1,38 @@
+name: P3 actual MOS TX buffer and MOS clock phase-retiming FFE
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_predriver_clock_retune.py'
+      - '.github/workflows/p3_mos_predriver_clock_retune.yml'
+permissions:
+  contents: read
+jobs:
+  phase-retime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        alpha: [0.0, 0.3]
+        bias: [0.95, 1.1, 1.25]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private MOS PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Retune full physical 180nm TX-buffer RX MOS clock phase
+        run: python3 simulation/p3_mos_predriver_clock_retune.py --bias ${{ matrix.bias }} --alpha ${{ matrix.alpha }}
+      - name: Preserve all results including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-physical-TX-buffer-MOS-phase-${{ matrix.alpha }}-${{ matrix.bias }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_mos_predriver_clock_retune/
