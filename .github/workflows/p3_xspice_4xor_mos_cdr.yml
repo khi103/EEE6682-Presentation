@@ -1,0 +1,38 @@
+name: P3 experimental one-SPICE four-XOR XSPICE sampled MOS data CDR
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_xspice_4xor_mos_cdr.py'
+      - '.github/workflows/p3_xspice_4xor_mos_cdr.yml'
+permissions:
+  contents: read
+jobs:
+  sampled-BBPD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        gain: [-20.0, 0.0, 20.0, 100.0]
+        shift: [-0.05, 0.95]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE mixed-signal ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify DB HiTek models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Execute sampled RX four-XOR data phase loop driving physical MOS clock-delayer
+        run: python3 simulation/p3_xspice_4xor_mos_cdr.py --gain ${{ matrix.gain }} --shift ${{ matrix.shift }}
+      - name: Preserve all passing and failing XSPICE physical receiver experiments
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-experimental-4XOR-data-loop-${{ matrix.gain }}-${{ matrix.shift }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_xspice_4xor_MOS_CDR/
