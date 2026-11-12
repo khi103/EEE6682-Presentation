@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'simulation/p3_fig20_charge_pump_mos.py'
+      - 'simulation/p3_fig18_pll_from_mos_pump.py'
       - '.github/workflows/p3_fig20_charge_pump.yml'
 
 permissions:
@@ -27,6 +28,10 @@ jobs:
           python3 scripts/validate_dbhitek_inverter.py
       - name: Simulate Fig20-inspired MOS current DAC in TT FF SS FS SF
         run: python3 simulation/p3_fig20_charge_pump_mos.py
+      - name: Test functional PLL driven by actual MOS current-code table
+        run: |
+          python3 -m pip install --user --break-system-packages numpy matplotlib
+          python3 simulation/p3_fig18_pll_from_mos_pump.py
       - name: Upload derived figures and data (no model source)
         if: always()
         uses: actions/upload-artifact@v4
