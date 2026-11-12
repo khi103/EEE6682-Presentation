@@ -65,8 +65,8 @@ def circuit(code,corner=CORNER,initial_bias=V_START):
         ".subckt pfd d_R d_V d_U d_Ubar d_D d_Dbar",
         "ANDRESET [d_U d_D] dreset and2",
         ".model and2 d_and(rise_delay=1e-11 fall_delay=1e-11 input_load=5e-15)",
-        "DREF done d_R dzero dreset d_U d_Ubar flop",
-        "DFB done d_V dzero dreset d_D d_Dbar flop",
+        "ADFFREF done d_R dzero dreset d_U d_Ubar flop",
+        "ADFFFB done d_V dzero dreset d_D d_Dbar flop",
         ".model flop d_dff(clk_delay=1e-11 set_delay=1e-11 "
           "reset_delay=1e-11 ic=2 rise_delay=1e-11 fall_delay=1e-11)",
         ".ends pfd",
