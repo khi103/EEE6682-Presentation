@@ -1,0 +1,38 @@
+name: P3 in-SPICE automatic physical MOS RX offset reference feedback
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_auto_mos_rx_offset_servo.py'
+      - '.github/workflows/p3_auto_mos_rx_offset_servo.yml'
+permissions:
+  contents: read
+jobs:
+  rx-offset:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        alpha: [0.0, 0.3]
+        gm: [0.0, 0.00010, 0.00050]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install physical MOS ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private licensed DB HiTek models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Simulate transistor sink and analog feedback correcting +30mV RX reference
+        run: python3 simulation/p3_auto_mos_rx_offset_servo.py --alpha ${{ matrix.alpha }} --gm ${{ matrix.gm }}
+      - name: Preserve all electrical outputs even when calibration does not converge
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-real-MOS-auto-RX-calibration-${{ matrix.alpha }}-${{ matrix.gm }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_auto_MOS_RX_offset/
