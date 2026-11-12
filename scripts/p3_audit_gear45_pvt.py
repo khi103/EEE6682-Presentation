@@ -71,7 +71,7 @@ def run(inp,out):
         "electrical_failures":len(fails),
         "failed_cases":fails,
         "default_3ps_original_PVT_screen":"45/45, run 43253822240",
-        "all_PVT_numerical_robustness_proven":len(fails)==0,
+        "all_45_conditions_pass_Gear_3ps":len(fails)==0,\n        "numerical_time_step_convergence_proven":False,\n        "known_short_step_issue":"At SS 85C VDD1.71 Gear 1ps stops 8.69ns and Gear 2ps stops near 509.85ns; independent simulated circuit not qualified at those grid settings.",
         "original_2004_foundry_model_reproduced":False,
         "data_CDR_silicon_lock_proven":False}
     (out/"gear45_summary.json").write_text(json.dumps(summary,indent=2)+"\n")
