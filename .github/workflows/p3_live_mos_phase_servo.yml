@@ -1,0 +1,38 @@
+name: P3 live RX-data phase feedback to physical MOS delay actuator
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_live_mos_phase_servo.py'
+      - '.github/workflows/p3_live_mos_phase_servo.yml'
+permissions:
+  contents: read
+jobs:
+  receiver-data-servo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        gain: [-200.0, -80.0, 0.0, 80.0, 200.0, 400.0]
+        shift: [-0.35, 0.35]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mixed-mode ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify 180nm private MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Inject data-only phase correction into physical MOS clock-delay capacitor
+        run: python3 simulation/p3_live_mos_phase_servo.py --gain ${{ matrix.gain }} --shift ${{ matrix.shift }}
+      - name: Preserve all physical loop acquisition and receiver failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-live-MOS-phase-servo-${{ matrix.gain }}-${{ matrix.shift }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_live_MOS_phase_servo/
