@@ -1,0 +1,63 @@
+{
+  "status": "simulated_independent_gate_bias_control_authority",
+  "tested_corners": [
+    "tt",
+    "ff",
+    "ss",
+    "fs",
+    "sf"
+  ],
+  "scope": "code 7, TT-sized 8:4:2:1 NMOS stage, 0.5-V signal supply, 1.8-V upper gate limit",
+  "gate_high_V": [
+    0.9,
+    1.1,
+    1.3,
+    1.5,
+    1.65,
+    1.8
+  ],
+  "ngspice_calls": 60,
+  "per_corner": {
+    "tt": {
+      "rout_at_1p8V_ohm": 49.997500124993714,
+      "rout_at_0p9V_ohm": 222.41992882562047,
+      "crosses_50_ohm_in_tested_bias_range": true,
+      "estimated_interpolated_gate_voltage_V": 1.7999332388613851,
+      "note": "Single operating point/code with independent ideal gate source. Not real replica/feedback."
+    },
+    "ff": {
+      "rout_at_1p8V_ohm": 42.808219178082304,
+      "rout_at_0p9V_ohm": 145.56040756914192,
+      "crosses_50_ohm_in_tested_bias_range": true,
+      "estimated_interpolated_gate_voltage_V": 1.5807759297520656,
+      "note": "Single operating point/code with independent ideal gate source. Not real replica/feedback."
+    },
+    "ss": {
+      "rout_at_1p8V_ohm": 58.67167331612309,
+      "rout_at_0p9V_ohm": 422.47570764681524,
+      "crosses_50_ohm_in_tested_bias_range": false,
+      "estimated_interpolated_gate_voltage_V": null,
+      "note": "Single operating point/code with independent ideal gate source. Not real replica/feedback."
+    },
+    "fs": {
+      "rout_at_1p8V_ohm": 43.45936549326388,
+      "rout_at_0p9V_ohm": 149.9250374812578,
+      "crosses_50_ohm_in_tested_bias_range": true,
+      "estimated_interpolated_gate_voltage_V": 1.6031608796296275,
+      "note": "Single operating point/code with independent ideal gate source. Not real replica/feedback."
+    },
+    "sf": {
+      "rout_at_1p8V_ohm": 58.008005104704445,
+      "rout_at_0p9V_ohm": 411.94644696189437,
+      "crosses_50_ohm_in_tested_bias_range": false,
+      "estimated_interpolated_gate_voltage_V": null,
+      "note": "Single operating point/code with independent ideal gate source. Not real replica/feedback."
+    }
+  },
+  "limitations": [
+    "No physical impedance feedback or closed-loop convergence",
+    "Only one output code and 0.25-V DC operating point was tested",
+    "Only gate-bias adjustments 0.9-1.8 V; other hardware controls could provide extra authority",
+    "ngspice/HSPICE model numerical compatibility not established"
+  ]
+}

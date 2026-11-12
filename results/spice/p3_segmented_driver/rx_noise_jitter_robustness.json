@@ -1,0 +1,53 @@
+{
+  "status": "synthetic_receiver_noise_jitter_study",
+  "data_source": "Actual ngspice transient waveforms of INDEPENDENT DB HiTek NMOS TX reconstruction",
+  "method": "sample same 1.20-UI phase; optimize only noiseless decision threshold per mode; independent zero-mean Gaussian receiver voltage noise and timing jitter",
+  "noise_rms_mV": [
+    0,
+    4,
+    8,
+    12,
+    16,
+    20,
+    24
+  ],
+  "jitter_rms_ps": [
+    0,
+    5,
+    10,
+    20
+  ],
+  "trials_per_mode_per_condition": 2000,
+  "reused_prbs_bits_per_trial": 106,
+  "limitations": [
+    "Synthetic Gaussian RX noise and jitter are not transistor-level noise/PLL/CDR models",
+    "Only 128-bit PRBS7 captured, 106 evaluated bits per repetition; errors are conditional Monte Carlo proxies",
+    "Zero observed errors cannot demonstrate actual BER below 1e-12",
+    "Threshold calibrated independently for each mode from noiseless samples",
+    "No original silicon 37 mV eye reproduction"
+  ],
+  "modes": {
+    "baseline": {
+      "noise_free_common_phase_eye_mV": 50.95893844900168,
+      "threshold_V": 0.2407148402968175,
+      "unique_prbs_bits_per_trial": 106,
+      "samples_reused_per_mode": 212000
+    },
+    "ffe_alpha_0p30": {
+      "noise_free_common_phase_eye_mV": 90.00611586635893,
+      "threshold_V": 0.23988420526920393,
+      "unique_prbs_bits_per_trial": 106,
+      "samples_reused_per_mode": 212000
+    }
+  },
+  "comparison_10ps_12mV": {
+    "baseline": {
+      "error_count": 339,
+      "empirical_error_fraction": 0.001599056603773585
+    },
+    "ffe_alpha_0p30": {
+      "error_count": 2,
+      "empirical_error_fraction": 9.433962264150944e-06
+    }
+  }
+}
