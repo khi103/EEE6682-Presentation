@@ -1,0 +1,32 @@
+name: P3 unified physical MOS TX RX and 450MHz PFD switched MOS PLL
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_reference_pll_integrated_mos_link.py'
+      - '.github/workflows/p3_reference_pll_mos_link.yml'
+permissions:
+  contents: read
+jobs:
+  integrated-analog-reference-pll:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE-capable MOS simulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Model validation
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run 450MHz /4 reference PLL plus all MOS TX/channel/RX and clock buffers in one circuit
+        run: python3 simulation/p3_reference_pll_integrated_mos_link.py
+      - name: Preserve physically acquired clock and receiver decisions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-450mhz-physical-mos-reference-PLL-linked-RX
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_reference_pll_mos_link/
