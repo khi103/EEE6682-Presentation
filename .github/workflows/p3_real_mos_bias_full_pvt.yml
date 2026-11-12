@@ -1,0 +1,84 @@
+name: P3 physically biased MOS PLL complete 42-case PVT confirmation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_real_mos_bias_full_pvt.py'
+      - '.github/workflows/p3_real_mos_bias_full_pvt.yml'
+permissions:
+  contents: read
+jobs:
+  real-MOS-PVT:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { design: diode_w16_r4k, corner: tt, temp: -20, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: tt, temp: 27, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: tt, temp: 85, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: ff, temp: -20, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: ff, temp: 27, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: ff, temp: 85, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: ss, temp: -20, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: ss, temp: 27, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: ss, temp: 85, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: fs, temp: -20, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: fs, temp: 27, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: fs, temp: 85, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: sf, temp: -20, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: sf, temp: 27, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: sf, temp: 85, vdd: 1.80 }
+          - { design: diode_w16_r4k, corner: tt, temp: 27, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: tt, temp: 27, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: ff, temp: 27, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: ff, temp: 27, vdd: 1.89 }
+          - { design: diode_w16_r4k, corner: ss, temp: 27, vdd: 1.71 }
+          - { design: diode_w16_r4k, corner: ss, temp: 27, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: tt, temp: -20, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: tt, temp: 27, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: tt, temp: 85, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: ff, temp: -20, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: ff, temp: 27, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: ff, temp: 85, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: ss, temp: -20, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: ss, temp: 27, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: ss, temp: 85, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: fs, temp: -20, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: fs, temp: 27, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: fs, temp: 85, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: sf, temp: -20, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: sf, temp: 27, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: sf, temp: 85, vdd: 1.80 }
+          - { design: diode_w8_r8k, corner: tt, temp: 27, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: tt, temp: 27, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: ff, temp: 27, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: ff, temp: 27, vdd: 1.89 }
+          - { design: diode_w8_r8k, corner: ss, temp: 27, vdd: 1.71 }
+          - { design: diode_w8_r8k, corner: ss, temp: 27, vdd: 1.89 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE-enabled ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing licensed 180nm MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Execute same-design PMOS-diode bias plus MOS reference PLL across PVT
+        run: >
+          python3 simulation/p3_real_mos_bias_full_pvt.py
+          --design ${{ matrix.design }}
+          --corner ${{ matrix.corner }}
+          --temp ${{ matrix.temp }}
+          --vdd ${{ matrix.vdd }}
+      - name: Retain completed physical MOS PVT pass/fail evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-physical-mos-bias-PVT-${{ matrix.design }}-${{ matrix.corner }}-${{ matrix.temp }}-${{ matrix.vdd }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_real_MOS_bias_full_PVT/
