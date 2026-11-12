@@ -151,7 +151,9 @@ def main(out,gain,shift):
     dst=work/model.name
     if not dst.exists() or model.stat().st_mtime>dst.stat().st_mtime:
         shutil.copy2(model,dst)
-    bits=prbs31(BITS)
+    # Explicitly pass current seed. Python default parameters bind at def-time;
+    # global PRBS_SEED changes in cross-seed experiments must reach the data.
+    bits=prbs31(BITS,seed=PRBS_SEED)
     result={
       "input_pattern":"256-bit PRBS31",
       "four_XSPICE_XOR_gates_present":True,
