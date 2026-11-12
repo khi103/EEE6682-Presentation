@@ -1,0 +1,37 @@
+name: P3 actual MOS PLL unwrapped reference-edge continuity check
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_pll_reference_edge_continuity.py'
+      - '.github/workflows/p3_pll_reference_edge_continuity.yml'
+permissions:
+  contents: read
+jobs:
+  phase-continuity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        ppm: [-1000.0, 0.0, 1000.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice with XSPICE
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing authorized 180nm MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test phase continuity using fixed 4-to-1 physical VCO/reference edge indexing
+        run: python3 simulation/p3_pll_reference_edge_continuity.py --corner ff --ppm ${{ matrix.ppm }}
+      - name: Preserve phase-continuity results even for failure conditions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-MOS-PLL-reference-index-${{ matrix.ppm }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_PLL_ref_edge_continuity/
