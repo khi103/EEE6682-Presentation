@@ -1,0 +1,86 @@
+name: P3 independent 45-point Gear numerical robustness of MOS PLL
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_gear_45_mos_pll_pvt.py'
+      - '.github/workflows/p3_gear_45_mos_pll_pvt.yml'
+permissions:
+  contents: read
+jobs:
+  gear-PVT:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { corner: tt, temp: -20, vdd: 1.71 }
+          - { corner: tt, temp: -20, vdd: 1.80 }
+          - { corner: tt, temp: -20, vdd: 1.89 }
+          - { corner: tt, temp: 27, vdd: 1.71 }
+          - { corner: tt, temp: 27, vdd: 1.80 }
+          - { corner: tt, temp: 27, vdd: 1.89 }
+          - { corner: tt, temp: 85, vdd: 1.71 }
+          - { corner: tt, temp: 85, vdd: 1.80 }
+          - { corner: tt, temp: 85, vdd: 1.89 }
+          - { corner: ff, temp: -20, vdd: 1.71 }
+          - { corner: ff, temp: -20, vdd: 1.80 }
+          - { corner: ff, temp: -20, vdd: 1.89 }
+          - { corner: ff, temp: 27, vdd: 1.71 }
+          - { corner: ff, temp: 27, vdd: 1.80 }
+          - { corner: ff, temp: 27, vdd: 1.89 }
+          - { corner: ff, temp: 85, vdd: 1.71 }
+          - { corner: ff, temp: 85, vdd: 1.80 }
+          - { corner: ff, temp: 85, vdd: 1.89 }
+          - { corner: ss, temp: -20, vdd: 1.71 }
+          - { corner: ss, temp: -20, vdd: 1.80 }
+          - { corner: ss, temp: -20, vdd: 1.89 }
+          - { corner: ss, temp: 27, vdd: 1.71 }
+          - { corner: ss, temp: 27, vdd: 1.80 }
+          - { corner: ss, temp: 27, vdd: 1.89 }
+          - { corner: ss, temp: 85, vdd: 1.71 }
+          - { corner: ss, temp: 85, vdd: 1.80 }
+          - { corner: ss, temp: 85, vdd: 1.89 }
+          - { corner: fs, temp: -20, vdd: 1.71 }
+          - { corner: fs, temp: -20, vdd: 1.80 }
+          - { corner: fs, temp: -20, vdd: 1.89 }
+          - { corner: fs, temp: 27, vdd: 1.71 }
+          - { corner: fs, temp: 27, vdd: 1.80 }
+          - { corner: fs, temp: 27, vdd: 1.89 }
+          - { corner: fs, temp: 85, vdd: 1.71 }
+          - { corner: fs, temp: 85, vdd: 1.80 }
+          - { corner: fs, temp: 85, vdd: 1.89 }
+          - { corner: sf, temp: -20, vdd: 1.71 }
+          - { corner: sf, temp: -20, vdd: 1.80 }
+          - { corner: sf, temp: -20, vdd: 1.89 }
+          - { corner: sf, temp: 27, vdd: 1.71 }
+          - { corner: sf, temp: 27, vdd: 1.80 }
+          - { corner: sf, temp: 27, vdd: 1.89 }
+          - { corner: sf, temp: 85, vdd: 1.71 }
+          - { corner: sf, temp: 85, vdd: 1.80 }
+          - { corner: sf, temp: 85, vdd: 1.89 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install actual XSPICE-capable MOS simulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify authorized DB HiTek 180nm MOS model locally
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Independently verify fixed physical MOS PLL with Gear 3ps
+        run: >
+          python3 simulation/p3_gear_45_mos_pll_pvt.py
+          --corner ${{ matrix.corner }}
+          --temp ${{ matrix.temp }}
+          --vdd ${{ matrix.vdd }}
+      - name: Preserve actual MOS PLL completed transients and failed electrical screens
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-gear-45-MOS-PVT-${{ matrix.corner }}-${{ matrix.temp }}-${{ matrix.vdd }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_gear45_physicalMOS_PLL/
