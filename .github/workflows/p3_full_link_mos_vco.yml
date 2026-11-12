@@ -1,0 +1,36 @@
+name: P3 full physical MOS TX/RX + free-running MOS VCO
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_full_link_physical_mos_vco.py'
+      - '.github/workflows/p3_full_link_mos_vco.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  physical-vco-link:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice and analysis dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+          python3 -m pip install --user --break-system-packages numpy
+      - name: Check MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Same-netlist MOS TX channel MOS RX and physically oscillating CMOS VCO
+        run: python3 simulation/p3_full_link_physical_mos_vco.py
+      - name: Upload calibration and physical waveforms without foundry PDK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-full-mos-tx-rx-clock-vco-proof
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_mos_vco_integrated/
