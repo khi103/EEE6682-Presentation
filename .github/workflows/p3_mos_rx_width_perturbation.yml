@@ -1,0 +1,38 @@
+name: P3 real MOS receiver input-pair sizing variation under physical PLL
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_rx_width_perturbation.py'
+      - '.github/workflows/p3_mos_rx_width_perturbation.yml'
+permissions:
+  contents: read
+jobs:
+  W_delta:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        delta: [-0.10, -0.05, 0.0, 0.05, 0.10]
+        alpha: [0.0, 0.30]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice XSPICE
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify licensed MOS model existing in repository
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Simulate 512-bit PRBS31 real MOS differential pair width offset
+        run: python3 simulation/p3_mos_rx_width_perturbation.py --delta ${{ matrix.delta }} --alpha ${{ matrix.alpha }}
+      - name: Retain physical MOS latch decisions and all failed cases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MOS-comparator-pair-W-${{ matrix.delta }}-${{ matrix.alpha }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_MOS_latch_width_perturb/
