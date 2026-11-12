@@ -1,0 +1,32 @@
+* P3 XSPICE ADC/DFF/DAC isolated unknown-state diagnostic
+* NO PDK. This is a bridge test, not a physical receiver / BER test.
+* Run in an XSPICE-enabled ngspice environment:
+*   ngspice -b circuits/p3_xspice_adc_dff_isolation.cir
+* The waveform is saved as p3_xspice_dff_diag.dat.
+*
+* Drives DATA and CLK with known ideal 0/1.8V PULSE sources.
+* Compares 3 asynchronous set/reset/IC options:
+*  1. DFF with IC=2 (unknown) and both async inputs tied ZERO,
+*     matching the current MOS CDR testbench.
+*  2. Same, but IC=0.
+*  3. IC=2 but both optional set/reset ports left as NULL.
+* The digital DAC maps logic U to out_undef=0.5 V.
+VDAT din 0 PULSE(0 1.8 .150n 5p 5p .850n 1.666n)
+VCLK clk 0 PULSE(0 1.8 .255n 5p 5p .270n .555555556n)
+VZERO zero 0 DC 0
+AADC_DFF [din clk zero] [ddin dclk dzero] adc_probe
+.model adc_probe adc_bridge(in_low=.8 in_high=1.0)
+ADFF_UNKNOWN ddin dclk dzero dzero dqu dqn_u flop_unknown
+ADFF_KNOWN ddin dclk dzero dzero dq0 dqn0 flop_known
+ADFF_NULL ddin dclk NULL NULL dqn dqn_n flop_unknown
+.model flop_unknown d_dff(clk_delay=1e-11 set_delay=1e-11 reset_delay=1e-11 ic=2 rise_delay=1e-11 fall_delay=1e-11)
+.model flop_known d_dff(clk_delay=1e-11 set_delay=1e-11 reset_delay=1e-11 ic=0 rise_delay=1e-11 fall_delay=1e-11)
+ABRDAC [ddin dclk dzero dqu dq0 dqn] [vdata vclock vzero vqu vq0 vqn] dac_probe
+.model dac_probe dac_bridge(out_low=0 out_high=1 out_undef=.5 input_load=5e-15 t_rise=5e-12 t_fall=5e-12)
+.control
+set noaskquit
+tran 2p 12n
+wrdata p3_xspice_dff_diag.dat time v(din) v(clk) v(vdata) v(vclock) v(vzero) v(vqu) v(vq0) v(vqn)
+quit
+.endc
+.end
