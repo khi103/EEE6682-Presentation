@@ -26,8 +26,8 @@ def deck(corner,code,vin=.25):
         inject += [
            f"VTP{w} gp{w} 0 {1.15 if ps else 1.8}",
            f"VTN{w} gn{w} 0 {0.65 if ns else 0}",
-           f"XPM{w} pre gp{w} vdd vdd 0 pch_svt_1p8v width=0.18u length=0.36u multi={w}",
-           f"XNM{w} pre gn{w} 0 0 nch_svt_1p8v width=0.18u length=0.36u multi={w}"
+           f"XPM{w} pre gp{w} vdd vdd 0 pch_svt_1p8v width=0.48u length=0.36u multi={w}",
+           f"XNM{w} pre gn{w} 0 0 nch_svt_1p8v width=0.48u length=0.36u multi={w}"
         ]
     return base.replace(".control","\n".join(inject)+"\n.control",1)
 
