@@ -1,0 +1,41 @@
+name: P3 marginal MOS PVT solver and integration timestep robustness
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_pvt_solver_convergence.py'
+      - '.github/workflows/p3_mos_pvt_solver_convergence.yml'
+permissions:
+  contents: read
+jobs:
+  numerical-convergence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        design: [diode_w16_r4k,diode_w8_r8k]
+        variant: [default_3ps,trap_2ps,trap_1ps,gear_3ps]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing 180nm MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Challenge SS hot low-V PVT with tighter integration and Gear
+        run: >
+          python3 simulation/p3_mos_pvt_solver_convergence.py
+          --design ${{ matrix.design }}
+          --variant ${{ matrix.variant }}
+      - name: Keep numerical failures and physical PVT evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-MOS-PVT-solver-${{ matrix.design }}-${{ matrix.variant }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_MOS_PVT_solver_sensitivity/
