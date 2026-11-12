@@ -1,0 +1,34 @@
+name: P3 Fig19 four-XOR BBPD and MOS charge-pump-coded RX timing
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_fig19_bbpd_mos_cosim.py'
+      - '.github/workflows/p3_fig19_bbpd_mos.yml'
+permissions:
+  contents: read
+jobs:
+  fig19:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice and unzip
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Execute original Fig19-inspired four-XOR PD and 7-bit MOS-current-controlled clock phase
+        run: python3 simulation/p3_fig19_bbpd_mos_cosim.py
+      - name: Retain real MOS current LUT, recovered clock and data samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-fig19-four-xor-bbpd-mos-rx-evidence
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            results/spice/p3_fig19_bbpd_mos/*.json
+            results/spice/p3_fig19_bbpd_mos/*.csv
