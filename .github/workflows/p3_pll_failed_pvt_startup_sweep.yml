@@ -1,0 +1,38 @@
+name: P3 physical MOS PLL failing PVT case startup sensitivity
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_pll_failed_pvt_startup_sweep.py'
+      - '.github/workflows/p3_pll_failed_pvt_startup_sweep.yml'
+permissions:
+  contents: read
+jobs:
+  startup-failure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        scenario: [ff_cold, ff_vdd_high, ss_cold, ss_vdd_low, ss_nominal_drift, tt_nominal_control]
+        start: [0.90, 1.02, 1.10, 1.20]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice with XSPICE
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify authorized MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test 180nm MOS PLL acquisition from alternate common initial Vctrl
+        run: python3 simulation/p3_pll_failed_pvt_startup_sweep.py --scenario ${{ matrix.scenario }} --start ${{ matrix.start }}
+      - name: Save corrected PVT metrics and all negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MOS-PLL-failed-startup-${{ matrix.scenario }}-${{ matrix.start }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_PVT_failed_startup_analysis/
