@@ -168,11 +168,28 @@ def main(out,gain,shift):
         deck,start=make_deck(bits,gain,shift)
         engine.run(deck,label)
         wave=LINK.read(work/"pll_driven_rx_wave.csv")
+        # Always preserve actual analog + bridge diagnostics, including
+        # when the RX sampler produces NO usable decision timestamps.
+        logic=analyze_logic(work/"xor_phase_details.csv",start,out/(label+"_logic_wave.csv"))
+        logic_stages=analyze_digital_stages(work/"xor_digital_inputs.csv",start,out/(label+"_digital_states.csv"))
+        result["four_XOR_logic_diagnostics"]=logic
+        result["digital_ADC_DFF_stage_diagnostics"]=logic_stages
+        from bisect import bisect_left
+        data_t=start*1e-9
+        result["raw_clock_edges_after_data_start"]={
+          "vco_rising":len(LINK.rising(wave,"vco_V",data_t)),
+          "clk_even_falling":len(LINK.falling(wave,"clkeven_V",data_t)),
+          "clk_odd_falling":len(LINK.falling(wave,"clkodd_V",data_t)),
+        }
+        focus=[r for r in wave if r["time_s"]>=data_t-1e-9]
+        if focus:
+            with (out/(label+"_analog_RX_and_clocks.csv")).open("w",newline="") as f:
+                w=csv.DictWriter(f,fieldnames=list(focus[0]))
+                w.writeheader()
+                w.writerows(focus[::max(1,len(focus)//5000)])
         samples,orig=LINK.evaluate(wave,bits,start)
         held=SERVO.score_holdout(samples,bits,start)
         pll=LINK.frequency(wave)
-        logic=analyze_logic(work/"xor_phase_details.csv",start,out/(label+"_logic_wave.csv"))
-        logic_stages=analyze_digital_stages(work/"xor_digital_inputs.csv",start,out/(label+"_digital_states.csv"))
         result.update({
           "status":"electrical_run",
           "reference_PLL":pll,
