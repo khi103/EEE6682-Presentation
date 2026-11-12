@@ -1,0 +1,38 @@
+name: P3 transistor-level MOS clock phase-actuator characterization
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_physical_phase_delay.py'
+      - '.github/workflows/p3_mos_physical_phase_delay.yml'
+permissions:
+  contents: read
+jobs:
+  mos-phase:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        bias: [0.0, 0.65, 0.8, 0.95, 1.1, 1.25]
+        shift: [-0.35, 0.35]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate private DB HiTek MOS
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run physical MOS clock delay with closed-loop reference PLL
+        run: python3 simulation/p3_mos_physical_phase_delay.py --bias ${{ matrix.bias }} --shift ${{ matrix.shift }}
+      - name: Save waveforms and all failed conditions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: physical-mos-delay-${{ matrix.bias }}-${{ matrix.shift }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_mos_physical_phase_delay/
