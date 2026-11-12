@@ -39,7 +39,7 @@ def make_deck(bits,shift,step_mv):
     deck,start_ns=FOUR.make_deck(bits,0.,shift)
     original="BNB_PD pd_nb 0 V={min(max(v(pdctrl),.65),1.65)}"
     if deck.count(original)!=1:raise RuntimeError("Expected exactly one physical MOS delay gate driver")
-    volts=sum([f"{2**i}*v(vcnt{i})" for i in range(7)])
+    volts="+".join(f"{2**i}*v(vcnt{i})" for i in range(7))
     # 0.0-1.8V digital-bit bridge encodes binary value.
     scalar=f"(({volts})/1.8 - {CENTER})"
     driver=f"BNB_COUNT pd_nb 0 V={{min(max(1.1+({step_mv*1e-3:.10g})*{scalar},.65),1.65)}}"
