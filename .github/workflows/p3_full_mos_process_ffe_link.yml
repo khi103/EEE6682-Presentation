@@ -1,0 +1,38 @@
+name: P3 full transistor MOS TX RX and physically diode-biased PLL five-corner sweep
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_full_mos_process_ffe_link.py'
+      - '.github/workflows/p3_full_mos_process_ffe_link.yml'
+permissions:
+  contents: read
+jobs:
+  MOS_link:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        corner: [tt, ff, ss, fs, sf]
+        alpha: [0.0, 0.3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice XSPICE
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing authorized MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Simulate real 180nm process-corner MOS TX predriver RX and physical-diode reference PLL
+        run: python3 simulation/p3_full_mos_process_ffe_link.py --corner ${{ matrix.corner }} --alpha ${{ matrix.alpha }}
+      - name: Preserve actual MOS RX latch decisions analog waveforms and partial supply power
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-real-full-MOS-process-${{ matrix.corner }}-${{ matrix.alpha }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_full_MOS_process_link/
