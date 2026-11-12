@@ -7,6 +7,8 @@ on:
     paths:
       - 'simulation/p3_transistor_driver.py'
       - 'simulation/plot_p3_driver.py'
+      - 'simulation/p3_gate_bias_authority.py'
+      - 'simulation/p3_rx_noise_jitter_sensitivity.py'
       - 'scripts/validate_p3_driver_results.py'
       - 'scripts/prepare_ngspice_model.py'
       - '.github/workflows/p3_driver_spice.yml'
@@ -34,6 +36,10 @@ jobs:
       - name: Reconstruct 8-4-2-1 NMOS TX driver and simulate
         run: |
           python3 simulation/p3_transistor_driver.py --symbols 128
+      - name: Test PVT gate-bias control authority (not physical feedback)
+        run: python3 simulation/p3_gate_bias_authority.py
+      - name: Test added Gaussian RX noise and sampling jitter
+        run: python3 simulation/p3_rx_noise_jitter_sensitivity.py --trials 2000
       - name: Render voltage-code, output resistance, corner and power plots
         run: |
           python3 simulation/plot_p3_driver.py
@@ -47,7 +53,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f results/spice/p3_segmented_driver/driver_summary.json \
                      results/spice/p3_segmented_driver/tt_code_sweep.csv \
-                     results/spice/p3_segmented_driver/pvt_corner_sweep.csv
+                     results/spice/p3_segmented_driver/pvt_corner_sweep.csv \
+                     results/spice/p3_segmented_driver/gate_bias_authority.csv \
+                     results/spice/p3_segmented_driver/gate_bias_authority.json \
+                     results/spice/p3_segmented_driver/rx_noise_jitter_robustness.csv \
+                     results/spice/p3_segmented_driver/rx_noise_jitter_robustness.json
           if ! git diff --cached --quiet; then
             git commit -m "results: archive verified MOS driver DC, PVT and transient metrics"
             git fetch origin main
