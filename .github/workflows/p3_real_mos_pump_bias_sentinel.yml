@@ -1,0 +1,67 @@
+name: P3 physical MOS diode-resistor pump bias 27-case PVT cross-validation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_real_mos_pump_bias_sentinel.py'
+      - '.github/workflows/p3_real_mos_pump_bias_sentinel.yml'
+permissions:
+  contents: read
+jobs:
+  MOS-physical-bias:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { design: diode_w8_r4k, scenario: ss_low }
+          - { design: diode_w8_r4k, scenario: ss_cold }
+          - { design: diode_w8_r4k, scenario: ss_nominal }
+          - { design: diode_w8_r4k, scenario: ff_high }
+          - { design: diode_w8_r4k, scenario: ff_cold }
+          - { design: diode_w8_r4k, scenario: ff_nominal }
+          - { design: diode_w8_r4k, scenario: tt_nominal }
+          - { design: diode_w8_r4k, scenario: fs_nominal }
+          - { design: diode_w8_r4k, scenario: sf_nominal }
+          - { design: diode_w16_r4k, scenario: ss_low }
+          - { design: diode_w16_r4k, scenario: ss_cold }
+          - { design: diode_w16_r4k, scenario: ss_nominal }
+          - { design: diode_w16_r4k, scenario: ff_high }
+          - { design: diode_w16_r4k, scenario: ff_cold }
+          - { design: diode_w16_r4k, scenario: ff_nominal }
+          - { design: diode_w16_r4k, scenario: tt_nominal }
+          - { design: diode_w16_r4k, scenario: fs_nominal }
+          - { design: diode_w16_r4k, scenario: sf_nominal }
+          - { design: diode_w8_r8k, scenario: ss_low }
+          - { design: diode_w8_r8k, scenario: ss_cold }
+          - { design: diode_w8_r8k, scenario: ss_nominal }
+          - { design: diode_w8_r8k, scenario: ff_high }
+          - { design: diode_w8_r8k, scenario: ff_cold }
+          - { design: diode_w8_r8k, scenario: ff_nominal }
+          - { design: diode_w8_r8k, scenario: tt_nominal }
+          - { design: diode_w8_r8k, scenario: fs_nominal }
+          - { design: diode_w8_r8k, scenario: sf_nominal }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mixed-signal MOS ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate existing authorized MOS PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test all-transistor resistor-based pump current-source bias
+        run: >
+          python3 simulation/p3_real_mos_pump_bias_sentinel.py
+          --design ${{ matrix.design }}
+          --scenario ${{ matrix.scenario }}
+      - name: Preserve physical bias and PLL PVT negative results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-physical-PMOS-bias-${{ matrix.design }}-${{ matrix.scenario }}
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/spice/p3_physical_pump_bias_sentinel/
