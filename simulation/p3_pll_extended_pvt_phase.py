@@ -86,14 +86,16 @@ def main(out,corner,temp,vdd):
       "case":name,"corner":corner,"temperature_C":temp,"MOS_core_supply_V":vdd,
       "external_reference_supply_V":1.8,"startup_voltage_V":INITIAL,
       "pump_width_scale":CP_SCALE,"added_VCO_cap_fF_per_stage":EXTRA_FF,
-      "target_GHz":1.8,"mixed_signal":"XSPICE PFD+divider, physical MOS pump/VCO",
+      "target_GHz":1.8,"evaluation_revision":"v2_three_disjoint_final_80ns_frequency_windows","mixed_signal":"XSPICE PFD+divider, physical MOS pump/VCO",
       "original_P3_physical_PLL":False,"jitter_is_not_random":True}
     try:
         engine.run(deck(corner,temp,vdd),name)
         rows=PLL.read(working/"physical_pll.csv")
         m=PLL.metrics(rows);m.update(PLL.aligned_phase_errors_ps(rows))
-        windows=[window(rows,a,a+80) for a in (680,760,840,920,1000,1080,1120)]
+        windows=[window(rows,a,a+80) for a in (720,800,880,960,1040,1120)]
         recent=windows[-1]
+        # Final three disjoint 80ns windows: [960,1040), [1040,1120), [1120,1200).
+        assert [(w["start_ns"],w["end_ns"]) for w in windows[-3:]] == [(960,1040),(1040,1120),(1120,1200)]
         span=[x["VCO_GHz"] for x in windows[-3:] if x["VCO_GHz"] is not None]
         drift=(max(span)-min(span))*1000 if len(span)==3 else None
         ppm=(m["vco_GHz"]/1.8-1)*1e6 if m.get("vco_GHz") else None
