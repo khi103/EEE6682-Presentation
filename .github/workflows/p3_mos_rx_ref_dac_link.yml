@@ -1,0 +1,37 @@
+name: P3 physical 4bit MOS reference DAC corrects offset in actual RX
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_rx_ref_dac_link.py'
+      - '.github/workflows/p3_mos_rx_ref_dac_link.yml'
+permissions:
+  contents: read
+jobs:
+  dac-link:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        code: [0, 3, 6, 8, 9, 10, 12, 15]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SPICE engine
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify 180nm licensed private MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Simulate physically-trimmed MOS receiver and switched MOS PLL
+        run: python3 simulation/p3_mos_rx_ref_dac_link.py --code ${{ matrix.code }}
+      - name: Preserve DC correction and all MOS latch decisions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: physical-MOS-RX-offset-4bit-DAC-code-${{ matrix.code }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_physical_MOS_RX_DAC/
