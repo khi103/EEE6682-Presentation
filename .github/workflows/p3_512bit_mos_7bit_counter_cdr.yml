@@ -1,0 +1,43 @@
+name: P3 full 512-bit PRBS31 physical MOS four-XOR 7bit data CDR stress
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_512bit_mos_7bit_counter_cdr.py'
+      - '.github/workflows/p3_512bit_mos_7bit_counter_cdr.yml'
+permissions:
+  contents: read
+jobs:
+  long-data:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        seed: ['0x54C4EE17','0x13572468']
+        shift: [-0.05,0.95]
+        step: [0,2,4,8]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE mixed MOS simulation backend
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate previously available 180nm foundry model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Strictly verify physical MOS 7bit counter data CDR and full PRBS31 packet
+        run: >
+          python3 simulation/p3_512bit_mos_7bit_counter_cdr.py
+          --seed ${{ matrix.seed }}
+          --shift ${{ matrix.shift }}
+          --step-mv ${{ matrix.step }}
+      - name: Preserve actual physical MOS bit-decision and data-loop counter histories
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-512bit-physical-7bit-CDR-${{ matrix.seed }}-${{ matrix.shift }}-${{ matrix.step }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_512bit_MOS_7bit_CDR/
