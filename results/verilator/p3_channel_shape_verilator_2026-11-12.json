@@ -1,0 +1,26 @@
+{
+  "source": "Actual lecturer SystemVerilog + Verilator modified to 3.6Gb/s, 32 samples/UI, synthetic channels",
+  "run_url": "https://github.com/khi103/serdes-lecture-site/actions/runs/43141054011",
+  "channel_models": "Synthetic independent 1/2/3-pole RC with matched ~-12dB at 1.8GHz, NOT RG58 S-parameters",
+  "cases": [
+    {
+      "rc_order": 1,
+      "loss_dB": -11.996135,
+      "none_eye_height_mV": 6.168063,
+      "two_tap_eye_height_mV": 65.71792
+    },
+    {
+      "rc_order": 2,
+      "loss_dB": -11.993023,
+      "none_eye_height_mV": 35.17016,
+      "two_tap_eye_height_mV": 67.6234
+    },
+    {
+      "rc_order": 3,
+      "loss_dB": -11.989537,
+      "none_eye_height_mV": 46.01043,
+      "two_tap_eye_height_mV": 66.66578
+    }
+  ],
+  "conclusion": "Nyquist attenuation alone does not determine eye opening; FFE benefit holds for tested model family, not guaranteed for the paper's measured cable."
+}
