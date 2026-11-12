@@ -1,0 +1,32 @@
+name: P3 450MHz real MOS switched-capacitor hold versus passive PLL filter
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_switched_cap_filter.py'
+      - '.github/workflows/p3_mos_switched_cap_filter.yml'
+permissions:
+  contents: read
+jobs:
+  compare-filters:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Model smoke test
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Compare passive and 450MHz MOS gated sample/hold VCO bias filters
+        run: python3 simulation/p3_mos_switched_cap_filter.py
+      - name: Upload spectral and transient results without PDK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-450mhz-mos-switched-capacitor-vs-passive-PLL
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_mos_switched_cap_filter/
