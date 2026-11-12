@@ -1,0 +1,85 @@
+{
+  "title": "P3 distinct-model evidence comparison (not equal-testbench validation)",
+  "created_utc": "2026-11-12",
+  "sources": {
+    "lecture_verilator_run": "https://github.com/khi103/serdes-lecture-site/actions/runs/43139646362",
+    "lecture_channel_shape_run": "https://github.com/khi103/serdes-lecture-site/actions/runs/43141054011",
+    "mos_driver_main_run": "https://github.com/khi103/EEE6682-Presentation/actions/runs/43138562081",
+    "mos_trim_slew_run": "https://github.com/khi103/EEE6682-Presentation/actions/runs/43140062561",
+    "mos_iv_run": "https://github.com/khi103/EEE6682-Presentation/actions/runs/43141317997",
+    "mos_extended_run": "https://github.com/khi103/EEE6682-Presentation/actions/runs/43141812130"
+  },
+  "independent_models": [
+    {
+      "model": "original lecture Verilator, 56Gb/s, original FR4-like channel",
+      "eye_noffe_mV": -130.2171,
+      "eye_with_3tap_zf_mV": 70.57716,
+      "ffe": "3-tap ZF",
+      "note": "different baud/channel, no direct performance ranking against 3.6Gb/s"
+    },
+    {
+      "model": "P3 modified actual lecture Verilator SystemVerilog, RC2 12dB at1.8GHz",
+      "eye_noffe_mV": 35.16765,
+      "eye_two_tap_mV": 67.62679,
+      "eye_noffe_width_ps": 156.258,
+      "eye_two_tap_width_ps": 243.068,
+      "ffe": "2-tap alpha0.3 L1 normalized",
+      "note": "different driver and signal convention from paper"
+    },
+    {
+      "model": "Independent Python RC2 3.6Gb/s 12dB at1.8GHz",
+      "eye_noffe_mV": 33.895,
+      "eye_two_tap_mV": 70.1263,
+      "eye_noffe_width_ps": 147.6,
+      "eye_two_tap_width_ps": 173.61,
+      "ffe": "2-tap alpha0.3 L1 normalized",
+      "note": "finite Gaussian edge and noiseless ideal receiver"
+    },
+    {
+      "model": "DB HiTek 180nm NMOS reconstruction ngspice + RC2",
+      "eye_noffe_mV": 50.958938449,
+      "eye_two_tap_mV": 90.006115866,
+      "eye_two_tap_optimized_mV": 90.586624243,
+      "ffe": "4-bit quantized 2-tap alpha0.3",
+      "note": "loaded TX swing 285.99154mVpp not 250mVpp; 0.5V signal supply, fixed 1.2UI sampling; not original paper PDK"
+    }
+  ],
+  "paper_measured": {
+    "chip": "0.18um CMOS, transceiver including real comparator/timing loops",
+    "two_tap_alpha": 0.3,
+    "eye_height_mV": 37,
+    "eye_width_ps": 189,
+    "output_impedance_ohm": "~50 with control loop, per paper Fig10",
+    "active_link_mW": 27.12
+  },
+  "matched_12db_channel_order_eyes": [
+    {
+      "order": 1,
+      "nyquist_loss_dB": -11.9961,
+      "eye_noffe_mV": 6.168063,
+      "eye_two_tap_mV": 65.71792
+    },
+    {
+      "order": 2,
+      "nyquist_loss_dB": -11.993,
+      "eye_noffe_mV": 35.17016,
+      "eye_two_tap_mV": 67.6234
+    },
+    {
+      "order": 3,
+      "nyquist_loss_dB": -11.9895,
+      "eye_noffe_mV": 46.01043,
+      "eye_two_tap_mV": 66.66578
+    }
+  ],
+  "claims": {
+    "system_ffe_eye_benefit": "observed in independent Python, Verilator, and separate MOS reconstruction testbenches",
+    "exact_paper_eye_reproduced": false,
+    "exact_paper_impedance_feedback_reproduced": false,
+    "full_link_power_reproduced": false,
+    "full_hspice_ngspice_numeric_correlation": false,
+    "real_fr4_rg58_complex_sparameters_available": false,
+    "physical_rx_comparator_pll_cdr_reproduced": false
+  },
+  "presentation_restriction": "Never conflate simulator outputs or report paper silicon as recreated from independent models"
+}
