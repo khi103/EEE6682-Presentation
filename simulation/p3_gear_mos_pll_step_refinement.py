@@ -25,11 +25,12 @@ STEPS_PS=(1,2,3)
 PVT=("ss",85.,1.71)
 
 def patch(deck,step):
-    target="tran 3p 1200n uic"
-    if deck.count(target)!=1:
-        # 1200ns is the current full reference-PLL analysis period.
-        raise RuntimeError(f"Unexpected transient timepoint: {deck.count(target)}")
-    deck=deck.replace(target,f"tran {step}p 1200n uic",1)
+    # The P3 PLL generator formats the duration as 1200.0n or 1200n.
+    # Replace exactly one full 1200ns waveform analysis statement.
+    pattern=r"(?m)^tran 3p (1200(?:[.]0+)?)n uic$"
+    deck,n=re.subn(pattern,lambda m:f"tran {step}p {m.group(1)}n uic",deck)
+    if n!=1:
+        raise RuntimeError(f"Unexpected transient statement, matching lines={n}")
     return deck.replace(".control",
          ".options method=gear reltol=.001\n.control",1)
 
