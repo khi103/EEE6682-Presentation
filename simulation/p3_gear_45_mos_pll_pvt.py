@@ -53,7 +53,11 @@ def main(out,corner,temp,vdd):
     finally:
         P.deck=old
     name=f"{corner}_T{temp:+.0f}_V{vdd:.2f}".replace("+","p").replace("-","m").replace(".","p")
-    waveform=TX.ENGINE_DIR/("p3_PLL_extended_PVT_"+name)/"physical_pll.csv"
+    # P.main() writes the ngspice working directory using LOWERCASE t/v,
+    # and the strings plus/minus rather than p/m for signs.
+    actual_work_name=(f"{corner}_t{temp:+.0f}_v{vdd:.2f}"
+                      .replace(".","p").replace("+","plus").replace("-","minus"))
+    waveform=TX.ENGINE_DIR/("p3_PLL_extended_PVT_"+actual_work_name)/"physical_pll.csv"
     try:
         last_ns=PLL.read(waveform)[-1]["time_s"]*1e9
     except Exception:
