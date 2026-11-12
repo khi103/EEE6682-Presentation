@@ -1,0 +1,41 @@
+name: P3 same-netlist transistor MOS TX-to-RX integrated 3.6 Gb/s
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_integrated_mos_link.py'
+      - 'simulation/p3_dynamic_latch_mos.py'
+      - '.github/workflows/p3_integrated_mos_link.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice and data-analysis packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+          python3 -m pip install --user --break-system-packages numpy
+      - name: Verify PDK model and elementary MOS inverter
+        run: |
+          bash scripts/run_dbhitek_smoke.sh
+          python3 scripts/validate_dbhitek_inverter.py
+      - name: Real 8-4-2-1 MOS transmitter to double-lane clocked MOS receiver
+        run: python3 simulation/p3_integrated_mos_link.py
+      - name: Archive numerical proof (excluding foundry PDK)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-integrated-transistor-mos-tx-rx
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            results/spice/p3_integrated_link/*.csv
+            results/spice/p3_integrated_link/*.json
