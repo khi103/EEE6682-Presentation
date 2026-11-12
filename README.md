@@ -144,3 +144,30 @@ validated physical PLL/CDR or a reproduction of the paper's Fig. 18–20.
 The model uses ideal FFE control sources, channel buffers and reference
 clock, and ignores several foundry HSPICE-only parameters. The original
 2004 silicon and 27.12-mW link performance have **not** been reproduced.
+
+
+## Data-only transition CDR test with actual 180nm MOS latches
+
+A new **two-pass data-only timing recovery / MOS-RX co-simulation** has
+been successfully executed at 3.6Gb/s. A causal phase estimator is
+updated ONLY by received RX threshold crossing times, never by TX PRBS
+bits. The resulting clock-event PWL then drives two actual PDK MOS
+regenerative receiver latches, with a minimum **150-mV |Q-QB|** margin
+to count a valid sample. The known PRBS is used ONLY for postrun
+integer-frame alignment and scoring.
+
+All three alpha=0.30 FFE tests (nominal, +1000ppm, -1000ppm receiver
+clock) gave **0 errors / 187 valid MOS samples**, with no unresolved
+samples. At +1000ppm without recovery, **50/187 errors**, including
+39 unresolved MOS latch samples, were observed.
+
+- [Actual passing Actions run](https://github.com/khi103/EEE6682-Presentation/actions/runs/43157182215)
+- [Causal data-only timing recovery / MOS replay code](simulation/p3_blind_cdr_mos_cosim.py)
+- [Precise scope and measurements in Korean](docs/P3_수신데이터_기반_CDR_MOS검증_20261112.md)
+
+This **does NOT** demonstrate a simultaneous in-SPICE physical
+PFD/Charge-Pump/VCO/CDR loop. The new recovered clock is still an ideal
+PWL source generated between separate MOS simulations. The physical
+VCO / B-source phase-detector same-netlist experiments are tracked
+separately, and should not be advertised as a locked data CDR unless
+their quantitative clock-frequency and MOS-latch tests also pass.
