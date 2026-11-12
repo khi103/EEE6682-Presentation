@@ -43,7 +43,7 @@ def measure(out: Path):
                 # Only modify gate driver voltage SOURCES; do not touch
                 # PDK model MOSFET thresholds or channel parameters.
                 deck,count=re.subn(
-                    r"(?m)^(VG[UD][1248]\s+\S+\s+0\s+DC\s+)1\.8\s*$",
+                    r"(?m)^(VG[UD][1248]\s+\S+\s+0\s+DC\s+)1\.8[ \t]*$",
                     lambda match:f"{match.group(1)}{gate_v:.6g}",deck)
                 if gate_v!=1.8 and count==0:
                     raise RuntimeError("No high gate biases were replaced")
