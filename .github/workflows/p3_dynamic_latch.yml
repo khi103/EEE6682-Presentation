@@ -1,0 +1,39 @@
+name: P3 clocked PMOS regenerative transistor sampler
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_dynamic_latch_mos.py'
+      - '.github/workflows/p3_dynamic_latch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-mos-latch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify model loading
+        run: |
+          bash scripts/run_dbhitek_smoke.sh
+          python3 scripts/validate_dbhitek_inverter.py
+      - name: Test real PMOS input clocked regenerative latch on 1.8-GHz clock
+        run: python3 simulation/p3_dynamic_latch_mos.py
+      - name: Retain actual MOS voltage and decisions (no foundry coefficients)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-clocked-mos-regenerative-latch
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            results/spice/p3_dynamic_latch/*.json
+            results/spice/p3_dynamic_latch/*.csv
