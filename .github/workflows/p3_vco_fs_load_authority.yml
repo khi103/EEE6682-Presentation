@@ -1,0 +1,32 @@
+name: P3 FS-corner 180nm MOS VCO extra loading authority
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_vco_fs_load_authority.py'
+      - '.github/workflows/p3_vco_fs_load_authority.yml'
+permissions:
+  contents: read
+jobs:
+  fs-vco-load:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private DB HiTek PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Sweep per-stage load on actual FS/TT MOS ring
+        run: python3 simulation/p3_vco_fs_load_authority.py
+      - name: Preserve 30 physically simulated VCO frequency points
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-FS-physical-MOS-VCO-extra-loading-analysis
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_vco_FS_load/
