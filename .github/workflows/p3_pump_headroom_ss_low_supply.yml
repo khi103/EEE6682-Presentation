@@ -1,0 +1,73 @@
+name: P3 MOS SS-low-voltage charge-pump headroom 32-case sweep
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_pump_headroom_ss_low_supply.py'
+      - '.github/workflows/p3_pump_headroom_ss_low_supply.yml'
+permissions:
+  contents: read
+jobs:
+  ss-pump-headroom:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { pbias: 0.70, nbias: 0.48, rzero: 1000 }
+          - { pbias: 0.70, nbias: 0.48, rzero: 2000 }
+          - { pbias: 0.70, nbias: 0.58, rzero: 1000 }
+          - { pbias: 0.70, nbias: 0.58, rzero: 2000 }
+          - { pbias: 0.70, nbias: 0.68, rzero: 1000 }
+          - { pbias: 0.70, nbias: 0.68, rzero: 2000 }
+          - { pbias: 0.70, nbias: 0.78, rzero: 1000 }
+          - { pbias: 0.70, nbias: 0.78, rzero: 2000 }
+          - { pbias: 0.80, nbias: 0.48, rzero: 1000 }
+          - { pbias: 0.80, nbias: 0.48, rzero: 2000 }
+          - { pbias: 0.80, nbias: 0.58, rzero: 1000 }
+          - { pbias: 0.80, nbias: 0.58, rzero: 2000 }
+          - { pbias: 0.80, nbias: 0.68, rzero: 1000 }
+          - { pbias: 0.80, nbias: 0.68, rzero: 2000 }
+          - { pbias: 0.80, nbias: 0.78, rzero: 1000 }
+          - { pbias: 0.80, nbias: 0.78, rzero: 2000 }
+          - { pbias: 0.90, nbias: 0.48, rzero: 1000 }
+          - { pbias: 0.90, nbias: 0.48, rzero: 2000 }
+          - { pbias: 0.90, nbias: 0.58, rzero: 1000 }
+          - { pbias: 0.90, nbias: 0.58, rzero: 2000 }
+          - { pbias: 0.90, nbias: 0.68, rzero: 1000 }
+          - { pbias: 0.90, nbias: 0.68, rzero: 2000 }
+          - { pbias: 0.90, nbias: 0.78, rzero: 1000 }
+          - { pbias: 0.90, nbias: 0.78, rzero: 2000 }
+          - { pbias: 1.00, nbias: 0.48, rzero: 1000 }
+          - { pbias: 1.00, nbias: 0.48, rzero: 2000 }
+          - { pbias: 1.00, nbias: 0.58, rzero: 1000 }
+          - { pbias: 1.00, nbias: 0.58, rzero: 2000 }
+          - { pbias: 1.00, nbias: 0.68, rzero: 1000 }
+          - { pbias: 1.00, nbias: 0.68, rzero: 2000 }
+          - { pbias: 1.00, nbias: 0.78, rzero: 1000 }
+          - { pbias: 1.00, nbias: 0.78, rzero: 2000 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE enabled ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate existing authorized 180nm MOS PDK without publishing parameters
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Characterize physical MOS charge pump bias at SS low VDD
+        run: >
+          python3 simulation/p3_pump_headroom_ss_low_supply.py
+          --pbias ${{ matrix.pbias }}
+          --nbias ${{ matrix.nbias }}
+          --rzero ${{ matrix.rzero }}
+      - name: Preserve all positive and negative electrical results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-ss-low-CP-headroom-${{ matrix.pbias }}-${{ matrix.nbias }}-${{ matrix.rzero }}
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/spice/p3_pump_SS_headroom/
