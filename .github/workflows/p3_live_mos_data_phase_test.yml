@@ -1,0 +1,36 @@
+name: P3 in-SPICE serial-data phase injection into MOS PLL
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_reference_pll_live_data_phase_test.py'
+      - '.github/workflows/p3_live_mos_data_phase_test.yml'
+permissions:
+  contents: read
+jobs:
+  data-feedback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        gain: ['-0.00008', '-0.00002', '0', '0.00002', '0.00008']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice and unzip
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify DB HiTek MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Execute behavioral serial-data detector directly driving physical MOS PLL
+        run: python3 simulation/p3_mos_reference_pll_live_data_phase_test.py --gain ${{ matrix.gain }} --shift-ui 0.35
+      - name: Preserve all physical SPICE waveforms and negative controls
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-mos-inspice-received-data-feedback-${{ matrix.gain }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_mos_in_spice_data_phase_test/
