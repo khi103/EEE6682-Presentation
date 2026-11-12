@@ -30,9 +30,10 @@ SAMPLE_AFTER_CLOCK_FALL_UI=.75
 REGEN_THRESHOLD_V=.15
 TARGET_FREQ_GHZ=1.8
 V_RX_THRESHOLD=.25
-GAINS=(0.,-.004,+.004,-.02,+.02)
+TESTS=((1.84,0.),(1.84,-.003),(1.80,-.003),(1.86,-.002))
 
-def deck(bits,gain,sign=1):
+def deck(bits,gain,reference_scale,sign=1):
+    FLL.EDGE_REFERENCE_SCALE=reference_scale
     base=FLL.netlist(bits,.30)
     extra=[
       "* Phase detector is an IDEAL behavioral analog element driven by REAL RX signal",
@@ -138,14 +139,15 @@ def run(out):
         shutil.copy2(source,target)
     bits=TX.prbs7(N_BITS)
     observations={}
-    for gain in GAINS:
-        label=f"gain_{'p' if gain>0 else 'm' if gain<0 else 'z'}{abs(gain):.4f}".replace(".","p")
-        runner.run(deck(bits,gain),label)
+    for reference_scale,gain in TESTS:
+        label=(f"ref_{reference_scale:.3f}_gain_{gain:+.4f}".replace(".","p").replace("+","p").replace("-","m"))
+        runner.run(deck(bits,gain,reference_scale),label)
         rows=FULL.read(work/"full_link_mos_vco.csv")
         measured=FULL.detect_vco_freq(rows)
         decisions,score=score_mos_edges(rows,bits)
         obs={
           "behavioral_CDR_gain_A_per_voltage":gain,
+          "frequency_reference_edge_scale":reference_scale,
           "mos_vco_frequency_GHz":measured.get("frequency_GHz"),
           "mos_decisions_from_actual_clock_edges":score,
           "mos_vco_frequency_near_target":measured.get("frequency_GHz") is not None and
@@ -159,7 +161,7 @@ def run(out):
     best=min(observations,key=lambda k:(
         observations[k]["mos_decisions_from_actual_clock_edges"]["bit_errors_including_unresolved"],
         abs(observations[k]["behavioral_CDR_gain_A_per_voltage"])))
-    base=observations["gain_z0p0000"]
+    base=next(obs for obs in observations.values() if obs["behavioral_CDR_gain_A_per_voltage"]==0.)
     report={
        "status":"executed_in_spice_data_transition_Bsource_PD_with_MOS_TX_RX_VCO",
        "physical_PDK":"DB HiTek SVT 180nm MOS TX RX Ring VCO Clock Buffers",
@@ -171,6 +173,7 @@ def run(out):
        "known_data_used_in_PD":False,
        "data_bits":N_BITS,
        "best_label_for_diagnostic_only":best,
+       "corner":"tt",
        "comparison_to_no_data_PD":base,
        "trials":observations,
        "limitations":[
@@ -183,7 +186,7 @@ def run(out):
        ]
     }
     (out/"in_spice_data_CDR_summary.json").write_text(json.dumps(report,indent=2)+"\n")
-    if (observations[best]["mos_decisions_from_actual_clock_edges"]["bit_errors_including_unresolved"] < 10 and
+    if (observations[best]["mos_decisions_from_actual_clock_edges"]["bit_errors_including_unresolved"] <= 5 and
         observations[best]["mos_vco_frequency_near_target"]):
         print(f"PASS: in-SPICE data-driven behavioral CDR improved physical MOS RX at {best}",flush=True)
     else:
