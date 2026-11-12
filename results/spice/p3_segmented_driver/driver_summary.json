@@ -115,6 +115,9 @@
     "rout_min_ohm": 49.1980714356003,
     "rout_max_ohm": 50.722799898555486,
     "rout_mean_ohm": 49.95165356593233,
+    "rout_loaded_operating_min_ohm": 35.919540229884916,
+    "rout_loaded_operating_max_ohm": 50.34955176311549,
+    "rout_loaded_operating_mean_ohm": 45.78385900784684,
     "output_min_V": 0.09794456,
     "output_max_V": 0.3839361,
     "actual_loaded_swing_mVpp": 285.99154,
@@ -139,7 +142,7 @@
       -0.024745627090926647
     ]
   },
-  "ngspice_invocations": 197,
+  "ngspice_invocations": 229,
   "unrecognized_hspice_model_params": [
     "binflag",
     "hspver",
