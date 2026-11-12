@@ -36,7 +36,9 @@ TESTS=(
  ("late_phase_div4",100,4,0.),
  ("early_phase_div16",15,16,0.),
  ("late_phase_div16",100,16,0.),
- ("early_phase_div4_plus1000ppm",15,4,1000.)
+ ("early_phase_div4_plus1000ppm",15,4,1000.),
+ ("early_phase_fixed_plus1000ppm",15,0,1000.),
+ ("mid_phase_div16",30,16,0.)
 )
 
 def load_pump_phase_lut(data:Path):
@@ -81,7 +83,7 @@ def controller(rows,phase_table,start_code,divider,ppm):
             dn=int(xor_down==1 and xor_up==0)
             accum+=up-dn
         updated=0
-        if (n+1)%divider==0:
+        if divider>0 and (n+1)%divider==0:
             if accum>0: updated=+1
             elif accum<0:updated=-1
             # Saturating counter: never wrap between MSB and LSB.
@@ -162,6 +164,7 @@ def run(out):
       "physical_live_PLL_CDR_achieved":False,
       "bit_rate_Gbps":3.6,"prbs_symbols":BITS,"valid_symbols_after_acquisition":VALID_AFTER,
       "results":summaries,"total_MOS_receiver_simulations":driver.calls,
+      "no_feedback_control_has_counter_update_interval_zero":True,
       "known_limitations":[
          "Counter-controlled MOS pump is a DC-current LUT, not a physical phase-shifting PLL closed loop",
          "The 350ps current-to-phase mapping assumes linear conversion from the paper's reported range",
@@ -172,13 +175,15 @@ def run(out):
       ],
     }
     (out/"fig19_bbpd_mos_link_summary.json").write_text(json.dumps(report,indent=2)+"\n")
-    outcomes=[v["mos_rx"]["total_errors_including_unresolved"]
-              for k,v in summaries.items() if k.endswith("div4")]
-    if min(outcomes)<=10:
-        print("PASS: Fig19-inspired four-XOR phase detector improves physical MOS RX in at least one acquisition case",flush=True)
-    else:
-        print("LIMITATION: Fig19-inspired controller did not yield reliable MOS sampling in tested cases",flush=True)
-        raise AssertionError("No Fig19-like BBPD MOS receiver case met <=10/valid-bit criterion")
+    controlled=summaries["early_phase_div4_plus1000ppm"]["mos_rx"]
+    open_loop=summaries["early_phase_fixed_plus1000ppm"]["mos_rx"]
+    nominal=summaries["early_phase_div4"]["mos_rx"]
+    if not (controlled["total_errors_including_unresolved"]<=5 and
+            nominal["total_errors_including_unresolved"]<=5 and
+            open_loop["total_errors_including_unresolved"]>=controlled["total_errors_including_unresolved"]+10):
+        print("FAIL: Fig19-like data PD did not beat truly fixed MOS receiver clock by >=10 bit decisions",flush=True)
+        raise AssertionError("BBPD acquisition/outperformance not established; see all MOS decisions")
+    print("PASS: Fig19-like 4-XOR CDR outperforms open-loop fixed phase at +1000ppm with strict MOS latch decisions",flush=True)
     return report
 
 if __name__=="__main__":
