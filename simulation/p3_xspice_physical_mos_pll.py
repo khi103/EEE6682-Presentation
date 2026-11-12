@@ -53,6 +53,7 @@ def circuit(code,corner=CORNER,initial_bias=V_START):
         ".model divider4 d_fdiv(div_factor=4 high_cycles=2 i_count=0 "
            "rise_delay=1e-11 fall_delay=1e-11)",
         "* Ground and logic one (same interface as official ngspice example)",
+        ".global dzero done",
         "VZERO z 0 DC 0",
         "ABRIDGE_ZERO [z] [dzero] adc_ref",
         "AINVONE dzero done inv_one",
