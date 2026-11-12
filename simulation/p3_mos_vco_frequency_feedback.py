@@ -19,10 +19,10 @@ REF_PERIOD_PS=1e3/TGT_GHZ
 PERIOD_NS=.5555555556
 RUN_NS=220.
 CLOOP=20e-12
-GAIN=5e-3
-TRIM_BIAS=(.87, .99)
+GAIN=3e-3
+TRIM_BIAS=(.78, .94)
 
-def deck(initial_v):
+def deck(initial_v, gain=GAIN, reference_detector_scale=1., stop_ns=RUN_NS):
     lines=[
       "* P3 INDEPENDENT MOS ring VCO with ngspice B-source FLL",
       '.include "db180_svt018_tt.lib"',
@@ -39,9 +39,9 @@ def deck(initial_v):
       "CREFDEL refd 0 10f",
       "RRINGDEL n1 n1d 1k",
       "CRINGDEL n1d 0 10f",
-      "BREFEDGE refedge 0 V={0.25*(1+tanh(30*(v(refclk)-0.9)))*(1-tanh(30*(v(refd)-0.9)))}",
+      f"BREFEDGE refedge 0 V={{ {0.25*reference_detector_scale:.12g}*(1+tanh(30*(v(refclk)-0.9)))*(1-tanh(30*(v(refd)-0.9))) }}",
       "BRINGEDGE ringedge 0 V={0.25*(1+tanh(30*(v(n1)-0.9)))*(1-tanh(30*(v(n1d)-0.9)))}",
-      f"BLOOP loopctrl 0 I={{ {GAIN:.9g}*(v(ringedge)-v(refedge)) }}",
+      f"BLOOP loopctrl 0 I={{ {gain:.9g}*(v(ringedge)-v(refedge)) }}",
     ]
     for i in range(1,VCO.STAGES+1):
         n=f"n{i}"
@@ -56,7 +56,7 @@ def deck(initial_v):
     lines += [
       ".ic "+" ".join(f"v(n{i})={'1.8' if i%2 else '0'}" for i in range(1,VCO.STAGES+1)),
       ".control","set noaskquit",
-      f"tran 3p {RUN_NS}n uic",
+      f"tran 3p {stop_ns}n uic",
       "wrdata fll.csv time v(n1) v(refclk) v(loopctrl) v(refedge) v(ringedge)",
       "quit",".endc",".end"
     ]
@@ -90,6 +90,14 @@ def measure(rr,begin_ns=RUN_NS-45):
             "median_tuning_bias_V":sorted(x["tuning_bias_V"] for x in rr[-3000:])[1500],
             "period_std_ps":math.sqrt(sum((p-mean)**2 for p in periods)/len(periods))*1e12}
 
+def time_average(rows,field,begin_ns):
+    a=[r for r in rows if r["time_s"]>=begin_ns*1e-9]
+    if len(a)<100:raise RuntimeError("Not enough samples for edge detector calibration")
+    area=sum((a[i][field]+a[i+1][field])*.5*(a[i+1]["time_s"]-a[i]["time_s"])
+             for i in range(len(a)-1))
+    return area/(a[-1]["time_s"]-a[0]["time_s"])
+
+
 def run(out):
     out.mkdir(parents=True,exist_ok=True)
     work=TX.ENGINE_DIR/"p3_in_spice_fll"
@@ -98,15 +106,32 @@ def run(out):
     path=work/model.name
     if not path.exists() or model.stat().st_mtime>path.stat().st_mtime:
         shutil.copy2(model,path)
+    # Calibrate different output edge slopes of ideal ref and physical MOS VCO.
+    # In-circuit feedback still controls physical MOS bias; per-edge detector
+    # gain is independently calibrated here once at nearly the target frequency.
+    reference_bias=.86
+    runner.run(deck(reference_bias,gain=0,stop_ns=65.),
+               "fll_detector_calibration")
+    cal=parse(work/"fll.csv")
+    freq=measure(cal,begin_ns=25)["frequency_GHz"]
+    if not freq:raise RuntimeError("Unforced calibration VCO did not oscillate")
+    refmean=time_average(cal,"reference_rising_detector",20)
+    ringmean=time_average(cal,"ring_rising_detector",20)
+    reference_detector_scale=(ringmean/refmean)*(TGT_GHZ/freq)
+    print(f"FLL per-edge calibration: physical ring at {freq:.4f}GHz, "
+          f"edge detector gain correction={reference_detector_scale:.6f}",flush=True)
     results=[]
     for bias in TRIM_BIAS:
-        runner.run(deck(bias),f"fll_start_{int(bias*1000)}")
+        runner.run(deck(bias,reference_detector_scale=reference_detector_scale),
+                   f"fll_start_{int(bias*1000)}")
         rr=parse(work/"fll.csv")
         m=measure(rr)
         record={"initial_V":bias,"final_V":rr[-1]["tuning_bias_V"],
                 "measured":m,"close_to_1p8GHz":m["frequency_GHz"] is not None and abs(m["frequency_GHz"]-1.8)<.025}
         results.append(record)
-        if record["close_to_1p8GHz"]:
+        record["final_edge_duty_ring"]=time_average(rr,"ring_rising_detector",RUN_NS-35)
+        record["final_edge_duty_reference"]=time_average(rr,"reference_rising_detector",RUN_NS-35)
+        if True:  # Preserve failure waveforms as engineering evidence.
             with (out/f"mos_fll_0p{int(bias*1000):03d}_waveform.csv").open("w",newline="") as f:
                 wr=csv.DictWriter(f,fieldnames=list(rr[0]))
                 wr.writeheader();wr.writerows(rr)
@@ -118,6 +143,8 @@ def run(out):
       "behavioral_components":"ideal B-source rising-edge detectors and loop current controller",
       "test_duration_ns":RUN_NS,"feedback_Gain_A_per_detector_difference":GAIN,
       "target_GHz":TGT_GHZ,"trials":results,
+      "reference_edge_scale":reference_detector_scale,
+      "calibration_initial_ring_frequency_GHz":freq,
       "not_actual_original_P3_PLL":True,
       "limits":[
         "This is an ideal behavioral frequency-locked loop; no phase lock detector or original PFD",
