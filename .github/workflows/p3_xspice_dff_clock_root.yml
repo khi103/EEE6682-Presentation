@@ -1,0 +1,38 @@
+name: P3 physical MOS data DFF clock-U cause isolation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_xspice_dff_clock_root.py'
+      - '.github/workflows/p3_xspice_dff_clock_root.yml'
+permissions:
+  contents: read
+jobs:
+  sample-clock:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        mode: [original, ring, ring_inv]
+        shift: [-0.05, 0.95]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify authorized DB HiTek MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Isolate sampled digital DFF from problematic physical clock ADC path
+        run: python3 simulation/p3_xspice_dff_clock_root.py --mode ${{ matrix.mode }} --shift ${{ matrix.shift }}
+      - name: Preserve diagnostic outputs for actual MOS linked waveforms
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xspice-data-DFF-clock-root-${{ matrix.mode }}-${{ matrix.shift }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_DFF_clock_root/
