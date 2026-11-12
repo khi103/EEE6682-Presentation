@@ -28,6 +28,9 @@ def plot(out):
     axes[0].set(ylabel="Loaded output (mV)",title="16 levels; 0.5-V signal supply and 50-ohm matched load")
     axes[0].legend()
     axes[1].plot(cv,z,"o-",label="Incremental source resistance near 0.25 V")
+    if "rout_ohm_at_loaded_operating_point" in dac[0]:
+        z_op=[float(r["rout_ohm_at_loaded_operating_point"]) for r in dac]
+        axes[1].plot(cv,z_op,"s-",label="At each actual loaded pad voltage")
     axes[1].axhline(50,color="gray",ls="--",label="50 ohm reference")
     axes[1].set(xlabel="Binary-weighted driver code (8:4:2:1)",
                 ylabel="Output resistance (ohm)")
