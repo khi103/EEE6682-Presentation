@@ -1,0 +1,62 @@
+name: P3 full CMOS TX predriver physical PLL RX 512bit PRBS31 controlled FFE
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_long_predriver_prbs31.py'
+      - 'scripts/p3_audit_long_predriver_ffe.py'
+      - '.github/workflows/p3_long_predriver_prbs31.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  physical-link:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        alpha: [0.0, 0.3]
+        bias: [0.95, 1.10]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MOS ngspice and unzip
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate licensed private MOS SVT model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run physical CMOS predriver and reference PLL with independent 512bit PRBS31
+        run: python3 simulation/p3_long_predriver_prbs31.py --alpha ${{ matrix.alpha }} --bias ${{ matrix.bias }}
+      - name: Retain physical latch waveforms and partial source power
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: long-full-MOS-FFE-${{ matrix.alpha }}-${{ matrix.bias }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_long_predriver_PRBS31/
+  fair-audit:
+    needs: physical-link
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: long-full-MOS-FFE-*
+          merge-multiple: true
+          path: original_latch_results/
+      - name: Require all four independent MOS cases and score one common trained lag
+        run: python3 scripts/p3_audit_long_predriver_ffe.py --in-dir original_latch_results/
+      - name: Save independent PRBS31 FFE evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-long-PRBS31-full-MOS-FFE-audit
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/audit/p3_full_MOS_PRBS31_FFE/
