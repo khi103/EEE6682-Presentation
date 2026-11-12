@@ -1,0 +1,32 @@
+name: P3 physical 180nm PMOS diode and resistor supply bias 208 DC points
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_physical_mos_cp_bias_dc.py'
+      - '.github/workflows/p3_physical_mos_cp_bias_dc.yml'
+permissions:
+  contents: read
+jobs:
+  MOS-bias:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing authorized MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Simulate 208 transistor PMOS/resistor source-bias combinations
+        run: python3 simulation/p3_physical_mos_cp_bias_dc.py
+      - name: Preserve public-safe MOS DC numeric results, not model parameters
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-physical-MOS-current-source-bias-DC-208
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/spice/p3_physical_MOS_CP_bias_DC/
