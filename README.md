@@ -228,3 +228,16 @@ MOS PLL reduced one PRBS31 phase-offset case from **40/227 to 6/227**
 errors, but did **not** qualify as physical data CDR lock. See the
 full audit for the PRBS31, negative-ppm, FF, switched-filter and
 license/PDK limitations.
+
+## Deeper 180-nm physical MOS and mixed-signal verification (Nov. 12)
+
+The newest **[Korean engineering verification report](docs/P3_20261112_MOS_물리회로_심화검증.md)** consolidates the 5-corner reference-PLL experiments, 7-bit switched charge-pump trim limits, real MOS receiver clock-delay actuation, data-controlled analog phase feedback, transistor-level 4-bit receiver offset DAC, and two-stage CMOS TX predrivers.
+
+Notable findings from **actual executed ngspice Actions**:
+
+- A MOS 4-bit offset-reference DAC selected by **independent DC voltage characterization** corrected an intentionally imposed +30-mV RX reference offset: held-out PRBS31 decisions changed **90/358 invalid-or-wrong at code 0 to 2/358 at code 9**, the two residual events being missing samples, not wrong regenerated bits.
+- Physical CMOS TX predrivers increased the shared 1.8-V PLL/RX/predriver partial source power from **2.5075 to 5.3022 mW** (alpha 0.30) and changed fixed-clock MOS RX decisions from **2/156 to 21/156**. Adding an independent physical MOS clock delay recovered **2/156** in the same modified signal chain. These effects emphasize timing and gate-slew nonidealities.
+- A **3-fF additional per-ring-stage load** restored a usable 1.8-GHz VCO control range in the otherwise nonlocking FS corner, with closed-loop FF/TT/FS/SF qualification at a chosen common pump strength. **SS still failed** in that same configuration. Tested fixed-pump sizing, asymmetric source/sink sizing, and 12 seven-bit MOS pump codes have not yet established one fully robust all-five-corner reference PLL.
+- Physical MOS data-phase feedback improved **31/156 to 9/156 or 10/156** in two adverse start-phase examples, but the detector remains a behavioral B-source and the **original four-XOR fully closed-loop data CDR has not been reconstructed**.
+
+**Do not treat GitHub Actions success as original 2004 silicon verification.** Some workflows intentionally retain failing electrical corners; passing their execution is not passing their lock screen. The original foundry PDK, measured cable/PCB S-parameters, proprietary circuit layout, HSPICE numerical equivalence, full-link 27.12-mW power and measured BER remain unverified.
