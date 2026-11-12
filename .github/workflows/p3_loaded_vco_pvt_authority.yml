@@ -1,0 +1,32 @@
+name: P3 actual loaded MOS VCO 5-corner frequency control authority
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_loaded_vco_pvt_authority.py'
+      - '.github/workflows/p3_loaded_vco_pvt_authority.yml'
+permissions:
+  contents: read
+jobs:
+  vco-authority:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Measure loaded MOS VCO open-loop control authority in TT FF SS FS SF
+        run: python3 simulation/p3_loaded_vco_pvt_authority.py
+      - name: Save 45 physical MOS bias-frequency points
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: loaded-MOS-VCO-five-corner-frequency-authority
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_loaded_vco_PVT_range/
