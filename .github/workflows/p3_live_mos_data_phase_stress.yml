@@ -1,0 +1,49 @@
+name: P3 physical MOS data PLL PRBS31 and phase-gain stress
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/stress_live_mos_data_phase_loop.py'
+      - '.github/workflows/p3_live_mos_data_phase_stress.yml'
+permissions:
+  contents: read
+jobs:
+  receiver-phase:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {pattern: prbs7, gain: '0.00012', shift: '0.35'}
+          - {pattern: prbs7, gain: '0.00016', shift: '0.35'}
+          - {pattern: prbs7, gain: '0.00024', shift: '0.35'}
+          - {pattern: prbs7, gain: '0', shift: '-0.35'}
+          - {pattern: prbs7, gain: '0.00008', shift: '-0.35'}
+          - {pattern: prbs7, gain: '0.00016', shift: '-0.35'}
+          - {pattern: prbs31, gain: '0', shift: '0.35'}
+          - {pattern: prbs31, gain: '0.00008', shift: '0.35'}
+          - {pattern: prbs31, gain: '0.00016', shift: '0.35'}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MOS ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify DB HiTek model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run data driven detector plus real MOS PLL and latch
+        run: >
+          python3 scripts/stress_live_mos_data_phase_loop.py
+          --pattern ${{ matrix.pattern }}
+          --gain ${{ matrix.gain }}
+          --shift-ui ${{ matrix.shift }}
+      - name: Save negative/positive evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-live-mos-data-feedback-${{ matrix.pattern }}-${{ matrix.gain }}-${{ matrix.shift }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_physical_data_loop_stress/
