@@ -1,0 +1,32 @@
+name: P3 physical MOS receiver DAC transient convergence diagnosis
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_rx_dac_startup_diagnostic.py'
+      - '.github/workflows/p3_rx_dac_startup_diagnostic.yml'
+permissions:
+  contents: read
+jobs:
+  dac-debug:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify licensed MOS PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Isolate analog reference DAC vs XSPICE PLL startup issue
+        run: python3 simulation/p3_rx_dac_startup_diagnostic.py
+      - name: Retain positive and negative simulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-integrated-physical-RX-DAC-startup-diagnosis
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_RX_DAC_startup_debug/
