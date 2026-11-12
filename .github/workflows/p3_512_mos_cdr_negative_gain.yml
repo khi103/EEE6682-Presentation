@@ -1,0 +1,57 @@
+name: P3 physical MOS 512bit XSPICE data CDR reverse-sign phase authority
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_512_mos_cdr_negative_gain.py'
+      - '.github/workflows/p3_512_mos_cdr_negative_gain.yml'
+permissions:
+  contents: read
+jobs:
+  CDR-sign:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { seed: '0x54C4EE17', phase: -0.05, gain: -0.5 }
+          - { seed: '0x54C4EE17', phase: -0.05, gain: -1.0 }
+          - { seed: '0x54C4EE17', phase: -0.05, gain: -2.0 }
+          - { seed: '0x54C4EE17', phase: -0.05, gain: -3.0 }
+          - { seed: '0x54C4EE17', phase: 0.95, gain: -0.5 }
+          - { seed: '0x54C4EE17', phase: 0.95, gain: -1.0 }
+          - { seed: '0x54C4EE17', phase: 0.95, gain: -2.0 }
+          - { seed: '0x54C4EE17', phase: 0.95, gain: -3.0 }
+          - { seed: '0x13572468', phase: -0.05, gain: -0.5 }
+          - { seed: '0x13572468', phase: -0.05, gain: -1.0 }
+          - { seed: '0x13572468', phase: -0.05, gain: -2.0 }
+          - { seed: '0x13572468', phase: -0.05, gain: -3.0 }
+          - { seed: '0x13572468', phase: 0.95, gain: -0.5 }
+          - { seed: '0x13572468', phase: 0.95, gain: -1.0 }
+          - { seed: '0x13572468', phase: 0.95, gain: -2.0 }
+          - { seed: '0x13572468', phase: 0.95, gain: -3.0 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install actual 180nm MOS/XSPICE backend
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing authorized MOS PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test 512-bit physical MOS CDR negative phase-gain sign
+        run: >
+          python3 simulation/p3_512_mos_cdr_negative_gain.py
+          --seed ${{ matrix.seed }}
+          --phase ${{ matrix.phase }}
+          --gain ${{ matrix.gain }}
+      - name: Save all valid and invalid physical MOS receiver evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P3-negative-physical-CDR-${{ matrix.seed }}-${{ matrix.phase }}-${{ matrix.gain }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_512_neg_gain_MOS_CDR/
