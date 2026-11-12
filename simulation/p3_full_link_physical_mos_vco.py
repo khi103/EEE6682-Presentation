@@ -81,6 +81,9 @@ def detect_vco_freq(rows):
     return OSC.measure(ss)
 
 def phase_search(rows,bits):
+    # A near-zero Q-QB differential during RESET is NOT a valid data bit.
+    # Require an independently resolved regenerative latch amplitude.
+    RESOLVED_DIFFERENTIAL_V=0.15
     times=[r["time_s"] for r in rows]
     result=None
     for parity in (0,1):
@@ -88,6 +91,8 @@ def phase_search(rows,bits):
             phase=phase_step*.05
             errors=0
             count=0
+            unresolved=0
+            sign_errors=0
             margin=[]
             for n in range(16,len(bits)-8):
                 t=(n+phase)*TX.UI_PS*1e-12
@@ -96,17 +101,31 @@ def phase_search(rows,bits):
                 qb=LINK.interp(rows,t,"qbeven_V" if even else "qbodd_V",times)
                 if not math.isfinite(q+qb):continue
                 bit=int(q>qb)
-                errors += int(bit!=bits[n])
+                differential=abs(q-qb)
+                resolved=differential>=RESOLVED_DIFFERENTIAL_V
+                sign_errors+=int(bit!=bits[n])
+                unresolved+=int(not resolved)
+                errors+=int(bit!=bits[n] or not resolved)
                 count+=1
-                margin.append(abs(q-qb))
+                margin.append(differential)
             if count<80:continue
-            candidate={"parity_mapping":parity,"offline_sample_phase_UI":phase,
-                       "errors":errors,"bits_compared":count,
-                       "observed_error_fraction":errors/count,
-                       "median_latch_differential_mV":sorted(margin)[len(margin)//2]*1e3}
-            if result is None or (candidate["errors"],-candidate["median_latch_differential_mV"]) < (result["errors"],-result["median_latch_differential_mV"]):
+            candidate={
+                "parity_mapping":parity,"offline_sample_phase_UI":phase,
+                "errors":errors, "raw_sign_errors":sign_errors,
+                "unresolved_samples":unresolved,
+                "resolution_threshold_mV":RESOLVED_DIFFERENTIAL_V*1e3,
+                "bits_compared":count,"observed_error_fraction":errors/count,
+                "median_latch_differential_mV":sorted(margin)[len(margin)//2]*1e3
+            }
+            if result is None or (
+                candidate["errors"],candidate["unresolved_samples"],
+                -candidate["median_latch_differential_mV"]
+                ) < (
+                result["errors"],result["unresolved_samples"],
+                -result["median_latch_differential_mV"]):
                 result=candidate
     return result
+
 
 def time_weighted_power_mW(rows, branch, supply_V):
     # Sign convention: current into voltage source is negative when supplying power.
