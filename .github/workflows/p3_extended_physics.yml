@@ -1,0 +1,61 @@
+name: P3 MOS extended validation — ideal replica trim and gate slew
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_transistor_driver.py'
+      - 'simulation/p3_ideal_replica_trim.py'
+      - 'simulation/p3_gate_slew_sensitivity.py'
+      - '.github/workflows/p3_extended_physics.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  characterize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice and Python scientific tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip python3 python3-pip
+          python3 -m pip install --user --break-system-packages numpy matplotlib
+      - name: Extract and validate DB HiTek 1.8-V model
+        run: |
+          bash scripts/run_dbhitek_smoke.sh
+          python3 scripts/validate_dbhitek_inverter.py
+      - name: Verify ideal per-corner replica calibration authority
+        run: python3 simulation/p3_ideal_replica_trim.py
+      - name: Verify ideal PWL gate slew impact on FFE eye and output-stage power
+        run: python3 simulation/p3_gate_slew_sensitivity.py
+      - name: Permanently archive derived numerical evidence (no model files)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f results/spice/p3_segmented_driver/ideal_replica_trim.csv \
+                     results/spice/p3_segmented_driver/ideal_replica_trim.json \
+                     results/spice/p3_segmented_driver/gate_slew_sensitivity.csv \
+                     results/spice/p3_segmented_driver/gate_slew_sensitivity.json
+          if ! git diff --cached --quiet; then
+            git commit -m "results: archive MOS ideal trim and slew sensitivity"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
+      - name: Upload verification graphs and CSV (excluding PDK)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-mos-ideal-trim-slew-sensitivity
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            results/spice/p3_segmented_driver/ideal_replica_trim.csv
+            results/spice/p3_segmented_driver/ideal_replica_trim.json
+            results/spice/p3_segmented_driver/gate_slew_sensitivity.csv
+            results/spice/p3_segmented_driver/gate_slew_sensitivity.json
+            results/spice/p3_segmented_driver/fig_gate_slew_sensitivity.png
