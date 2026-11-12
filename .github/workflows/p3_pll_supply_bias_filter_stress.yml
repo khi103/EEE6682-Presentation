@@ -1,0 +1,43 @@
+name: P3 physical MOS PLL supply-tracked CP bias and loop-zero experiment
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_pll_supply_bias_filter_stress.py'
+      - '.github/workflows/p3_pll_supply_bias_filter_stress.yml'
+permissions:
+  contents: read
+jobs:
+  pvt-repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        scenario: [ff_high_vdd, ss_low_vdd]
+        bias_mode: [fixed, vsg_0p85, vsg_0p80]
+        rzero: [1000, 2000, 4000]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice XSPICE
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify MOS model authorization workspace
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run physical 180nm MOS PFD and CP with supply bias and RC loop compensation
+        run: >
+          python3 simulation/p3_pll_supply_bias_filter_stress.py
+          --scenario ${{ matrix.scenario }}
+          --bias-mode ${{ matrix.bias_mode }}
+          --rzero ${{ matrix.rzero }}
+      - name: Preserve every electrical failure and candidate PVT improvement
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MOS-PLL-bias-filter-${{ matrix.scenario }}-${{ matrix.bias_mode }}-${{ matrix.rzero }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_MOS_supply_bias_filter/
