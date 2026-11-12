@@ -1,0 +1,38 @@
+name: P3 actual MOS reference PLL +/-1000ppm frequency tracking
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_physical_pll_reference_tracking.py'
+      - '.github/workflows/p3_physical_pll_reference_tracking.yml'
+permissions:
+  contents: read
+jobs:
+  freq-tracking:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        corner: [tt, ff, ss, fs, sf]
+        ppm: [-1000.0, 0.0, 1000.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mixed-signal ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate existing DB HiTek MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test real MOS physically diode-biased PLL against disturbed reference clock frequency
+        run: python3 simulation/p3_physical_pll_reference_tracking.py --corner ${{ matrix.corner }} --ppm ${{ matrix.ppm }}
+      - name: Preserve physical clock tracking and cycle-slip results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-MOS-PLL-reference-track-${{ matrix.corner }}-${{ matrix.ppm }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_MOS_reference_frequency_tracking/
