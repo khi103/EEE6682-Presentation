@@ -1,0 +1,38 @@
+name: P3 fixed-start global MOS pump PVT strength map
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_global_pump_pvt.py'
+      - '.github/workflows/p3_global_pump_pvt.yml'
+permissions:
+  contents: read
+jobs:
+  sweep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        corner: [tt, ff, ss, fs, sf]
+        scale: [0.5, 0.65, 0.75, 0.85, 1.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice with XSPICE extensions
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate private DB HiTek PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Screen same static PLL design across process corners
+        run: python3 simulation/p3_global_pump_pvt.py --corner ${{ matrix.corner }} --scale ${{ matrix.scale }}
+      - name: Preserve all positive and negative results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-pump-PVT-${{ matrix.corner }}-${{ matrix.scale }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_global_pump_pvt/
