@@ -1,0 +1,38 @@
+name: P3 real MOS RX offset stress with reference PLL and PRBS31
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_rx_offset_stress.py'
+      - '.github/workflows/p3_mos_rx_offset_stress.yml'
+permissions:
+  contents: read
+jobs:
+  input-offset:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        alpha: [0.0, 0.3]
+        offset: [-30.0, -15.0, 0.0, 15.0, 30.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private MOS PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Simulate physical receiver latch offset and retained PLL
+        run: python3 simulation/p3_mos_rx_offset_stress.py --alpha ${{ matrix.alpha }} --offset ${{ matrix.offset }}
+      - name: Preserve all decision and negative results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MOS-P3-RX-offset-${{ matrix.alpha }}-${{ matrix.offset }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_mos_rx_dc_offset/
