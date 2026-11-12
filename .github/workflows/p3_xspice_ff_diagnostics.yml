@@ -1,0 +1,32 @@
+name: P3 FF corner reference PLL failure diagnosis
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_xspice_ff_corner_diagnostics.py'
+      - '.github/workflows/p3_xspice_ff_diagnostics.yml'
+permissions:
+  contents: read
+jobs:
+  ff-diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice with XSPICE
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private licensed DB HiTek 180 nm models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Retain all physically simulated FF filter and pump outcomes
+        run: python3 simulation/p3_xspice_ff_corner_diagnostics.py
+      - name: Upload all results including failed and unstable cases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-ff-corner-physical-mos-PLL-diagnostics
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_xspice_pll_ff_corner/
