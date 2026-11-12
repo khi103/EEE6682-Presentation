@@ -1,0 +1,32 @@
+name: P3 4bit physical MOS receiver reference-offset trim DC authority
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_rx_ref_dac_dc.py'
+      - '.github/workflows/p3_mos_rx_ref_dac_dc.yml'
+permissions:
+  contents: read
+jobs:
+  mos-dac:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify DB HiTek PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test 96 physical MOS DC current sink trim settings
+        run: python3 simulation/p3_mos_rx_ref_dac_dc.py
+      - name: Preserve code-voltage calibration without foundry model data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: physical-MOS-RX-DC-4bit-reference-DAC
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_RX_MOS_ref_trim_DC/
