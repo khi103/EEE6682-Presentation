@@ -1,0 +1,82 @@
+name: P3 corrected four-XOR MOS data phase-loop 40-condition cross-validation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_4xor_cdr_gain_robustness.py'
+      - '.github/workflows/p3_4xor_cdr_gain_robustness.yml'
+permissions:
+  contents: read
+jobs:
+  full_mos_bbpd:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { seed: '0x54C4EE17', gain: -20.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: -20.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x54C4EE17', gain: -20.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: -20.0, cap: 8.0, shift: 0.95 }
+          - { seed: '0x54C4EE17', gain: -10.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: -10.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x54C4EE17', gain: -10.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: -10.0, cap: 8.0, shift: 0.95 }
+          - { seed: '0x54C4EE17', gain: 0.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: 0.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x54C4EE17', gain: 0.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: 0.0, cap: 8.0, shift: 0.95 }
+          - { seed: '0x54C4EE17', gain: 10.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: 10.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x54C4EE17', gain: 10.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: 10.0, cap: 8.0, shift: 0.95 }
+          - { seed: '0x54C4EE17', gain: 20.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: 20.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x54C4EE17', gain: 20.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x54C4EE17', gain: 20.0, cap: 8.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: -20.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: -20.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: -20.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: -20.0, cap: 8.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: -10.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: -10.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: -10.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: -10.0, cap: 8.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: 0.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: 0.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: 0.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: 0.0, cap: 8.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: 10.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: 10.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: 10.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: 10.0, cap: 8.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: 20.0, cap: 2.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: 20.0, cap: 2.0, shift: 0.95 }
+          - { seed: '0x13572468', gain: 20.0, cap: 8.0, shift: -0.05 }
+          - { seed: '0x13572468', gain: 20.0, cap: 8.0, shift: 0.95 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing MOS foundry models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Characterize actual MOS phase-loop bit recovery and cycle coverage
+        run: >
+          python3 simulation/p3_4xor_cdr_gain_robustness.py
+          --seed ${{ matrix.seed }}
+          --gain ${{ matrix.gain }}
+          --cap ${{ matrix.cap }}
+          --shift ${{ matrix.shift }}
+      - name: Retain all negative and positive 4-XOR data-recovery results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-4xor-cdr-${{ matrix.seed }}-${{ matrix.gain }}-${{ matrix.cap }}-${{ matrix.shift }}
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/spice/p3_4XOR_CDR_gain/
