@@ -1,0 +1,39 @@
+name: P3 Alexander XSPICE BBPD capacitor and gain with physical MOS clock
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_alexander_mos_gain_sweep.py'
+      - '.github/workflows/p3_alexander_mos_gain_sweep.yml'
+permissions:
+  contents: read
+jobs:
+  physical-bbpd-gain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        cap: [0.8, 2.0]
+        gain: [-80.0, 0.0, 80.0]
+        shift: [-0.05, 0.95]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE-enabled ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify authorized 180nm private MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run physical MOS phase-detector capacitor and feedback gain sensitivity
+        run: python3 simulation/p3_alexander_mos_gain_sweep.py --cap ${{ matrix.cap }} --gain ${{ matrix.gain }} --shift ${{ matrix.shift }}
+      - name: Preserve all real physical MOS phase and data decisions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-alexander-mos-gain-${{ matrix.cap }}-${{ matrix.gain }}-${{ matrix.shift }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_alexander_MOS_gain/
