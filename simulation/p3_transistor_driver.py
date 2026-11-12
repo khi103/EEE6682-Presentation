@@ -156,6 +156,21 @@ class SpiceRunner:
             raise RuntimeError("Non-positive incremental conductance")
         return 1.0/conductance
 
+def rout_at_operating_voltage(runner: SpiceRunner, code: int,
+                              wu: float, wd: float, corner: str,
+                              center_v: float, temp_c: float=PROCESS_TEMP_C,
+                              v_signal: float=V_SIGNAL) -> float:
+    """Incremental source resistance at actual LOADED pad operating point.
+    
+    Measure dV/dI by removing the termination and substituting a voltage clamp,
+    centered on the pad voltage found with the matched 50-ohm receiver.
+    """
+    dv=.002
+    a=runner.dc(code,wu,wd,corner,center_v-dv/2,temp_c,v_signal)["clamp_A"]
+    b=runner.dc(code,wu,wd,corner,center_v+dv/2,temp_c,v_signal)["clamp_A"]
+    return dv/abs(b-a)
+
+
 def calibrate(runner: SpiceRunner, corner: str, code: int, side: str,
               desired_r: float = 50.0) -> dict:
     # width_unit in micrometers; each binary unit is an NMOS finger, and
@@ -352,10 +367,12 @@ def main(out: Path, symbols: int, do_transient: bool):
     for code in range(16):
         d=runner.dc(code,wu,wd,"tt")
         z=runner.rout(code,wu,wd,"tt")
+        z_operating=rout_at_operating_voltage(runner,code,wu,wd,"tt",d["pad_V"])
         rows.append({
           "corner":"tt","temp_C":27,"code":code,"up_fraction":code/15.0,
           "vout_V":d["pad_V"],"ideal_loaded_V":0.125+0.25*code/15.0,
           "rout_ohm_at_vref":z,
+          "rout_ohm_at_loaded_operating_point":z_operating,
           "p_signal_supply_mW":max(0,-d["driver_supply_A"]*V_SIGNAL*1e3),
         })
     save_csv(out/"tt_code_sweep.csv",rows)
@@ -390,6 +407,7 @@ def main(out: Path, symbols: int, do_transient: bool):
                 "p_signal_supply_mW":max(0,-d["driver_supply_A"]*supply*1e3)})
     save_csv(out/"pvt_corner_sweep.csv",variation)
     rvals=[x["rout_ohm_at_vref"] for x in rows]
+    rop=[x["rout_ohm_at_loaded_operating_point"] for x in rows]
     vout=[x["vout_V"] for x in rows]
     actual_lsb=(vout[-1]-vout[0])/15.
     dnl = [(vout[i+1]-vout[i])/actual_lsb-1 for i in range(15)]
@@ -411,6 +429,9 @@ def main(out: Path, symbols: int, do_transient: bool):
        "tt_code_sweep":{
         "code_count":16,"rout_min_ohm":min(rvals),"rout_max_ohm":max(rvals),
         "rout_mean_ohm":sum(rvals)/len(rvals),
+        "rout_loaded_operating_min_ohm":min(rop),
+        "rout_loaded_operating_max_ohm":max(rop),
+        "rout_loaded_operating_mean_ohm":sum(rop)/len(rop),
         "output_min_V":min(vout),"output_max_V":max(vout),
         "actual_loaded_swing_mVpp":(vout[-1]-vout[0])*1e3,
         "actual_endpoint_lsb_mV":actual_lsb*1e3,
