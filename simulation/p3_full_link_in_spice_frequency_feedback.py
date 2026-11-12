@@ -19,7 +19,7 @@ import p3_transistor_driver as TX
 import p3_full_link_physical_mos_vco as FULL
 import p3_mos_vco_frequency_feedback as FLL
 
-START_DATA_NS=555.
+START_DATA_NS=554.94
 TARGET_F_GHZ=1.8
 BIAS_INITIAL=1.0
 EDGE_REFERENCE_SCALE=1.752000
