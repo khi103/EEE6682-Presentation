@@ -1,0 +1,35 @@
+name: P3 unified MOS TX RX VCO with in-SPICE clock frequency feedback
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_full_link_in_spice_frequency_feedback.py'
+      - '.github/workflows/p3_full_mos_clock_feedback.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  integrated-clock-feedback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MOS simulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Sanity check PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run physical MOS TX plus MOS RX and free VCO with behavioral in-SPICE FLL
+        run: python3 simulation/p3_full_link_in_spice_frequency_feedback.py
+      - name: Keep full-link loop outcomes including unsuccessful capture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-full-mos-link-and-in-circuit-clock-frequency-feedback
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_fll_integrated/
