@@ -1,0 +1,32 @@
+name: P3 physical 180nm MOS ring VCO analog PLL feedback prototype
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_analog_mos_pll_feedback.py'
+      - '.github/workflows/p3_mos_analog_pll.yml'
+permissions:
+  contents: read
+jobs:
+  pll:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test ideal behavioral phase detector driving a physical MOS VCO
+        run: python3 simulation/p3_analog_mos_pll_feedback.py
+      - name: Upload observed loop behavior and locked/unlocked status
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-mos-vco-analog-feedback
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_analog_mos_pll/
