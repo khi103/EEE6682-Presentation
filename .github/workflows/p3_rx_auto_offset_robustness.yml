@@ -1,10 +1,11 @@
-name: P3 physical MOS automatic receiver offset calibration signed range
+name: P3 physical MOS automatic receiver offset calibration full signed range
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
       - 'simulation/p3_rx_auto_offset_robustness.py'
+      - 'simulation/p3_auto_mos_rx_offset_servo.py'
       - '.github/workflows/p3_rx_auto_offset_robustness.yml'
 permissions:
   contents: read
