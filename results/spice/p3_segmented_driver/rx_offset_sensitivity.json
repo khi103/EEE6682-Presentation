@@ -1,0 +1,397 @@
+{
+  "status": "synthetic_comparator_offset_and_ideal_correction",
+  "physical_source": "ngspice MOS TX plus surrogate RC channel",
+  "not_original_RX": true,
+  "noise_rms_mV": 4.0,
+  "fixed_sample_UI": 1.2,
+  "trial_bits_per_case": 53000,
+  "offsets_mV": [
+    -40,
+    -30,
+    -20,
+    -10,
+    0,
+    10,
+    20,
+    30,
+    40
+  ],
+  "calibrations": {
+    "baseline": {
+      "threshold_no_offset_V": 0.2407148402968175,
+      "noiseless_eye_mV": 50.95893844900168
+    },
+    "ffe_alpha_0p30": {
+      "threshold_no_offset_V": 0.23988420526920393,
+      "noiseless_eye_mV": 90.00611586635893
+    }
+  },
+  "limits": [
+    "Ideal comparator threshold; no physical transistor comparator",
+    "Perfect offset subtraction uses the true offset; not the paper's calibration",
+    "Reused 106 bits from a single 128-bit PRBS7 transient",
+    "Finite empirical error rate does not establish silicon BER"
+  ],
+  "results": [
+    {
+      "mode": "baseline",
+      "offset_mV": -40,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 4906,
+      "observed_error_fraction": 0.09256603773584905,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": -40,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": -30,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 2376,
+      "observed_error_fraction": 0.044830188679245285,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": -30,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": -20,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 142,
+      "observed_error_fraction": 0.002679245283018868,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": -20,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": -10,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": -10,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 0,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 0,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 10,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 10,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 20,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 98,
+      "observed_error_fraction": 0.001849056603773585,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 20,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 30,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 2120,
+      "observed_error_fraction": 0.04,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 30,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 40,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 4673,
+      "observed_error_fraction": 0.08816981132075472,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "baseline",
+      "offset_mV": 40,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": -40,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 434,
+      "observed_error_fraction": 0.008188679245283019,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": -40,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": -30,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": -30,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": -20,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": -20,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": -10,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": -10,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 0,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 0,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 10,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 10,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 20,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 20,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 30,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 30,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 40,
+      "noise_rms_mV": 4.0,
+      "calibration": "none",
+      "trial_bits": 53000,
+      "error_count": 455,
+      "observed_error_fraction": 0.008584905660377359,
+      "not_true_BER": 1
+    },
+    {
+      "mode": "ffe_alpha_0p30",
+      "offset_mV": 40,
+      "noise_rms_mV": 4.0,
+      "calibration": "ideal_exact_offset_removal",
+      "trial_bits": 53000,
+      "error_count": 0,
+      "observed_error_fraction": 0.0,
+      "not_true_BER": 1
+    }
+  ]
+}
