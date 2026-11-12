@@ -97,3 +97,18 @@ and synthetic RX noise/jitter/offset and functional CDR phase tracking.
 The details and all unavailable **original-chip** evidence are catalogued
 in [docs/P3_추가검증_종합보고서_20261112.md](docs/P3_추가검증_종합보고서_20261112.md).
 
+
+## Fig8/Fig14/Fig20 independent MOS tests (Nov. 12, 2026)
+
+Three additional independent transistor-level/simulation-hybrid blocks were
+actually executed with the DB HiTek SVT models:
+
+- **Fig8-inspired pull-up/pull-down replicas:** [closed-loop MOS replica, ideal analog integrator](simulation/p3_fig8_analog_replica_loop.py) with [verified ngspice run](https://github.com/khi103/EEE6682-Presentation/actions/runs/43146576981); and [6-bit SAR MOS replica calibration](simulation/p3_fig8_dual_replica_feedback.py). Both can calibrate an isolated 50-ohm reference at TT/FF/SS/FS/SF. They do **not** implement the actual paper's Op-Amp/LDO or guarantee the full 16-code PAD Rout.
+- **Fig14-inspired MOS comparator:** [physical PMOS-input differential amplifier, NMOS current-mirror load and CMOS buffers](simulation/p3_fig14_comparator_mos.py), plus [binary-weighted MOS current trim](simulation/p3_fig14_offset_current_trim.py), [verified executed characterization](https://github.com/khi103/EEE6682-Presentation/actions/runs/43147732459). MOS switching works only at a **100-MHz large-swing** test; it **does not** meet the paper's 1.8-GHz / small-signal comparator requirement. Full M1–M19 regenerative latch and precise offset controller are not implemented.
+- **Fig20-inspired current pump:** [physical PMOS/NMOS 7-bit weighted current DAC](simulation/p3_fig20_charge_pump_mos.py), [executed ngspice](https://github.com/khi103/EEE6682-Presentation/actions/runs/43147620804). Only code-current monotonicity at a clamped 0.9-V node was verified. Fig21's measured phase shift and the paper's actual PLL are **not** reproduced. The separate [functional ideal-PLL loop](simulation/p3_fig18_pll_from_mos_pump.py) consumes this MOS current lookup but is not a transistor PLL.
+
+See the [comprehensive report in Korean](docs/P3_Fig8_Fig14_Fig20_MOS_회로검증_20261112.md).
+**These blocks have not yet been integrated into a validated 3.6-Gb/s
+transistor-level TX–RX–PLL/CDR.** PDK HSPICE/ngspice numerical equivalence,
+actual RG58/FR4 S-parameters, original 2004 silicon layout, full-link
+power and jitter remain unavailable or unverified. Do not claim otherwise.
