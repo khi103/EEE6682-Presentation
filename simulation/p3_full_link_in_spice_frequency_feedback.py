@@ -22,7 +22,7 @@ import p3_mos_vco_frequency_feedback as FLL
 START_DATA_NS=555.
 TARGET_F_GHZ=1.8
 BIAS_INITIAL=1.0
-EDGE_REFERENCE_SCALE=1.664661
+EDGE_REFERENCE_SCALE=1.860000
 K_FLL=3e-3
 C_FLL=20e-12
 BITS=128
@@ -86,6 +86,7 @@ def run(out):
        "status":"completed_same_netlist_MOS_TX_RX_VCO_with_behavioral_FLL",
        "mos_blocks":"DB HiTek SVT 8:4:2:1 TX, PMOS-input two-lane RX regenerative latches, MOS ring VCO, MOS clock buffers",
        "in_spice_loop":"B-source rising-edge frequency detector + physical loop capacitor driving real MOS VCO",
+       "reference_edge_scale":EDGE_REFERENCE_SCALE,
        "reference_clock_GHz":1.8,
        "data_rate_Gbps":3.6,"data_start_after_acquisition_ns":START_DATA_NS,
        "actual_vco_frequency":vco,
