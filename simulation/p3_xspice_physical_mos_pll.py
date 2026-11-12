@@ -24,11 +24,11 @@ import p3_ring_vco_mos as RING
 
 RATE_GHZ=1.8
 REF_MHZ=450.0
-TRIM_CODES=(0,63,127)
+TRIM_CODES=(63,)
 V_START=.96
-TIME_NS=180.
+TIME_NS=800.
 VREF_BIAS=.96
-LOOP_C_F=30e-12
+LOOP_C_F=50e-12
 I_SOURCE_W_UM=8.0
 I_SINK_W_UM=8.0
 REF_PERIOD_PS=1e12/(REF_MHZ*1e6)
@@ -162,6 +162,33 @@ def metrics(rows):
         "periods":len(d)
     }
 
+def aligned_phase_errors_ps(rows, start_ns=TIME_NS-80):
+    """Measure 450MHz reference vs each fourth VCO edge, modulo one VCO UI.
+
+    True locked PLL should have nearly constant nearest-edge phase and
+    low frequency offset. This does not characterize phase noise.
+    """
+    from bisect import bisect_left
+    vco=rising(rows,"vco_V",start_ns=start_ns-2)
+    ref=rising(rows,"ref_V",start_ns=start_ns)
+    if len(vco)<70 or len(ref)<25:
+        return {"std_phase_ps":None,"mean_phase_ps":None,"n_reference_edges":len(ref)}
+    tvco=(vco[-1]-vco[0])/(len(vco)-1)
+    diff=[]
+    for t in ref:
+        i=bisect_left(vco,t)
+        if i<1 or i>=len(vco):continue
+        left,right=vco[i-1],vco[i]
+        delta=min((left-t,right-t),key=abs)
+        diff.append(delta*1e12)
+    if len(diff)<25:return {"std_phase_ps":None,"mean_phase_ps":None,"n_reference_edges":len(diff)}
+    mean=sum(diff)/len(diff)
+    stdev=math.sqrt(sum((x-mean)**2 for x in diff)/len(diff))
+    return {"std_phase_ps":stdev,"mean_phase_ps":mean,
+            "phase_p2p_ps":max(diff)-min(diff),
+            "n_reference_edges":len(diff)}
+
+
 def main(out):
     out.mkdir(parents=True,exist_ok=True)
     work=TX.ENGINE_DIR/"p3_physical_xspice_pll"
@@ -175,11 +202,18 @@ def main(out):
         txt=runner.run(circuit(code),f"pfd_vco_cp_code_{code}")
         wave=read(work/"physical_pll.csv")
         m=metrics(wave)
+        m.update(aligned_phase_errors_ps(wave))
+        m["frequency_near_1p8GHz"]=bool(m.get("vco_GHz") and abs(m["vco_GHz"]-RATE_GHZ)<.012)
+        m["candidate_phase_locked"]=bool(m["frequency_near_1p8GHz"] and
+             m.get("std_phase_ps") is not None and m["std_phase_ps"]<8 and
+             m["control_delta_last_30ns_mV"]<12)
         cases[str(code)]=m
         print(f"XSPICE PFD -> switched MOS CP -> physical MOS VCO "
               f"code={code} fVCO={m.get('vco_GHz')}GHz "
               f"VCTRL={m['control_last_V']:.4f}V "
-              f"VCTRLpp={m.get('control_delta_last_30ns_mV')}mV",flush=True)
+              f"VCTRLpp={m.get('control_delta_last_30ns_mV')}mV "
+              f"PhaseStd={m.get('std_phase_ps')}ps "
+              f"locked={m['candidate_phase_locked']}",flush=True)
         if code==63:
             with (out/"xspice_pfd_mos_cp_vco_code63_waveform.csv").open("w",newline="") as f:
                 step=max(1,len(wave)//25000)
@@ -203,9 +237,9 @@ def main(out):
       ]
     }
     (out/"xspice_mos_pfd_cp_pll_results.json").write_text(json.dumps(result,indent=2)+"\n")
-    if not any(v.get("vco_GHz") and abs(v["vco_GHz"]-RATE_GHZ)<.06 for v in cases.values()):
-        raise AssertionError("Official XSPICE PFD + physical MOS pump/VCO did not capture 1.8 GHz")
-    print("PASS: XSPICE PFD/4 and physical MOS charge pump/VCO demonstrated near-target frequency in at least one code",flush=True)
+    if not any(v.get("candidate_phase_locked") for v in cases.values()):
+        raise AssertionError("XSPICE PFD + real MOS switched pump/VCO did NOT meet frequency, phase stability and loop-ripple lock criteria")
+    print("PASS: physical XSPICE PFD/MOS pump/VCO meets frequency, phase and loop-ripple criteria",flush=True)
     return result
 
 if __name__=="__main__":
