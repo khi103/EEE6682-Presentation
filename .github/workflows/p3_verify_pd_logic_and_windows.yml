@@ -1,0 +1,20 @@
+name: P3 PDK-independent digital phase detector and PLL window unit tests
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/p3_verify_pd_logic_and_windows.py'
+      - 'simulation/p3_transition_qualified_mos_bbpd.py'
+      - 'simulation/p3_pll_extended_pvt_phase.py'
+      - '.github/workflows/p3_verify_pd_logic_and_windows.yml'
+permissions:
+  contents: read
+jobs:
+  pdk-free-unit-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run pure Python logic truth-table and time-window integrity checks
+        run: python3 scripts/p3_verify_pd_logic_and_windows.py
