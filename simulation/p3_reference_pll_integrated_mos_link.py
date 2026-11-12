@@ -170,6 +170,15 @@ def evaluate(rows,bits,start_ns):
         "fixed_sample_after_physical_clock_fall_UI":RX_READ_AFTER_FALL_UI,
     }
 
+def time_weighted_power_mW(rows,branch,supply_V):
+    """Time-integrated actual SPICE branch source power, NOT sample mean."""
+    area=sum(.5*(a[branch]+b[branch])*(b["time_s"]-a["time_s"])
+             for a,b in zip(rows,rows[1:]))
+    dur=rows[-1]["time_s"]-rows[0]["time_s"]
+    if dur<=0:raise ValueError("Missing source-current waveform duration")
+    return -area/dur*supply_V*1e3
+
+
 def save(path,rows):
     if not rows:return
     with path.open("w",newline="") as f:
@@ -191,7 +200,22 @@ def run(out):
         rows=read(working/"pll_driven_rx_wave.csv")
         pll=frequency(rows)
         samples,rx=evaluate(rows,bits,START_DATA_NS)
-        cases[name]={"pll":pll,"physical_mos_rx":rx}
+        power_window=[row for row in rows
+                      if row["time_s"]>=START_DATA_NS*1e-9]
+        partial_power={
+            "1p8V_VDD_mW":time_weighted_power_mW(
+                 power_window,"power_vdd_source_A",1.8),
+            "0p5V_TX_signaling_supply_mW":time_weighted_power_mW(
+                 power_window,"power_tx_source_A",.5)
+        }
+        partial_power["reported_partial_total_mW"]=(
+            partial_power["1p8V_VDD_mW"]+
+            partial_power["0p5V_TX_signaling_supply_mW"])
+        rx["all_digital_decisions_correct_and_regenerated"]=bool(
+            rx["bit_errors_including_unresolved"]==0 and
+            rx["unresolved_MOS_latch_samples"]==0)
+        cases[name]={"pll":pll,"physical_mos_rx":rx,
+                     "time_weighted_partial_source_power":partial_power}
         save(out/f"{name}_mos_clocked_receiver_decisions.csv",samples)
         # Preserve 1 in 10 points of the final waveform data interval.
         focus=[row for row in rows if row["time_s"]>=(START_DATA_NS-3)*1e-9]
@@ -209,6 +233,7 @@ def run(out):
        "ideal_elements":["450MHz crystal reference PULSE","TX 1.8V gate PWL drivers",
                          "Two-pole buffered RC channel","MOS VCO's isolated third-pole RC filter"],
        "NOT_an_actual_data_CDR":True,
+       "power_scope":"Actual 1.8-V VDD branch for oscillator/MOS pump/clock buffers/RX plus 0.5-V MOS TX signaling source during data burst; excludes ideal TX gate drivers, termination bias and reference oscillator.",
        "postrun_integer_frame_alignment_only":True,
        "cases":cases,"ngspice_runs":runner.calls,
        "limitations":[
@@ -220,9 +245,12 @@ def run(out):
        ]
     }
     (out/"reference_pll_mos_link_summary.json").write_text(json.dumps(report,indent=2)+"\n")
-    if abs(cases["ffe_0p30"]["pll"]["vco_GHz"]-1.8)>=.025:
-        raise AssertionError("Physical XSPICE PLL with added MOS TX/RX load is no longer frequency locked")
-    print("PASS: 450MHz XSPICE reference PLL physically clocks MOS TX/RC/MOS RX in a SINGLE SPICE netlist",flush=True)
+    pllcase=cases["ffe_0p30"]["pll"]
+    if abs(pllcase["vco_GHz"]-1.8)>=.025 or pllcase["phase_standard_deviation_ps"]>=8:
+        raise AssertionError("MOS TX/RX loading prevents physical PLL frequency/phase lock")
+    print("PASS: physical reference PLL frequency and phase locked in single MOS TX/RX netlist",flush=True)
+    if not cases["ffe_0p30"]["physical_mos_rx"]["all_digital_decisions_correct_and_regenerated"]:
+        print("LIMITATION: clocked MOS RX has residual data errors; a real data CDR is still required",flush=True)
     return report
 
 if __name__=="__main__":
