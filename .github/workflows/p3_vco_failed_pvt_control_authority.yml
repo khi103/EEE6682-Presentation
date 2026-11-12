@@ -1,0 +1,37 @@
+name: P3 failed-PVT ring VCO loaded MOS control authority diagnosis
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_vco_failed_pvt_control_authority.py'
+      - '.github/workflows/p3_vco_failed_pvt_control_authority.yml'
+permissions:
+  contents: read
+jobs:
+  MOS_vco:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        scenario: [ff_cold, ff_vdd_high, ss_cold, ss_vdd_low, tt_nominal]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE enabled ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify authorized 180nm PDK copy
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Measure 13 transistor-level VCO control biases for each failing PVT case
+        run: python3 simulation/p3_vco_failed_pvt_control_authority.py --scenario ${{ matrix.scenario }}
+      - name: Preserve open-loop VCO tuning evidence and non-oscillating cases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: physical-MOS-VCO-failed-PVT-${{ matrix.scenario }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_pvt_openloop_vco/
