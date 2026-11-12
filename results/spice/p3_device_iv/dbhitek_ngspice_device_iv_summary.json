@@ -1,0 +1,75 @@
+{
+  "status": "passed_ngspice_device_iv_sanity",
+  "model": "DB HiTek 0.18um SVT MOS, zero dtemp copied wrapper",
+  "simulator": "ngspice-42 ngbehavior=hs",
+  "devices": [
+    "nch_svt_1p8v",
+    "pch_svt_1p8v"
+  ],
+  "corners": [
+    "tt",
+    "ff",
+    "ss",
+    "fs",
+    "sf"
+  ],
+  "number_of_dc_runs": 380,
+  "calculated_sanity_checks": {
+    "tt_nmos": {
+      "Id_at_0p5V_gate_A": 3.27363e-06,
+      "Id_at_1p5V_gate_A": 0.000358807,
+      "on_off_ratio_at_two_biases": 109.60523944367567
+    },
+    "ff_nmos": {
+      "Id_at_0p5V_gate_A": 1.18354e-05,
+      "Id_at_1p5V_gate_A": 0.000432666,
+      "on_off_ratio_at_two_biases": 36.556939351437215
+    },
+    "ss_nmos": {
+      "Id_at_0p5V_gate_A": 6.75608e-07,
+      "Id_at_1p5V_gate_A": 0.000295454,
+      "on_off_ratio_at_two_biases": 437.3157215426697
+    },
+    "fs_nmos": {
+      "Id_at_0p5V_gate_A": 1.15202e-05,
+      "Id_at_1p5V_gate_A": 0.000424315,
+      "on_off_ratio_at_two_biases": 36.83225985659971
+    },
+    "sf_nmos": {
+      "Id_at_0p5V_gate_A": 6.79175e-07,
+      "Id_at_1p5V_gate_A": 0.000300178,
+      "on_off_ratio_at_two_biases": 441.9744543011742
+    },
+    "tt_pmos": {
+      "Id_at_0p5V_gate_A": 1.137692e-06,
+      "Id_at_1p5V_gate_A": 0.0001136676,
+      "on_off_ratio_at_two_biases": 99.9106963923452
+    },
+    "ff_pmos": {
+      "Id_at_0p5V_gate_A": 3.633338e-06,
+      "Id_at_1p5V_gate_A": 0.0001427313,
+      "on_off_ratio_at_two_biases": 39.28379358044861
+    },
+    "ss_pmos": {
+      "Id_at_0p5V_gate_A": 2.336271e-07,
+      "Id_at_1p5V_gate_A": 9.013715e-05,
+      "on_off_ratio_at_two_biases": 385.81632867077496
+    },
+    "fs_pmos": {
+      "Id_at_0p5V_gate_A": 2.365976e-07,
+      "Id_at_1p5V_gate_A": 9.167212e-05,
+      "on_off_ratio_at_two_biases": 387.4600587664456
+    },
+    "sf_pmos": {
+      "Id_at_0p5V_gate_A": 3.524622e-06,
+      "Id_at_1p5V_gate_A": 0.0001403503,
+      "on_off_ratio_at_two_biases": 39.81995799833287
+    }
+  },
+  "limitations": [
+    "HSPICE proprietary model-option warnings ignored by ngspice",
+    "No matching HSPICE reference I-V dataset available",
+    "This check does not establish current, capacitance, noise or transient accuracy against HSPICE",
+    "Derived 1um/0.18um MOS test devices, not exact paper transistor dimensions"
+  ]
+}
