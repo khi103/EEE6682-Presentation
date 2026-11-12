@@ -1,0 +1,36 @@
+name: P3 physical reference PLL MOS TX FFE controlled ablation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_reference_pll_ffe_ablation.py'
+      - '.github/workflows/p3_reference_pll_ffe_ablation.yml'
+permissions:
+  contents: read
+jobs:
+  mos-ffe-matrix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        alpha: [0.00, 0.15, 0.30, 0.45]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify DB HiTek licensed SVT MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run physically clocked 3.6Gbps MOS reference-PLL link
+        run: python3 simulation/p3_reference_pll_ffe_ablation.py --alpha ${{ matrix.alpha }}
+      - name: Store physical receiver decisions, source power and analog waveforms
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-mos-reference-pll-FFE-ablation-alpha-${{ matrix.alpha }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_mos_reference_ffe_ablation/
