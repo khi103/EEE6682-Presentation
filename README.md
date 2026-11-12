@@ -69,3 +69,31 @@ good nominal 50-ohm result as a silicon validation.
 The enhanced MOS ngspice workflow also checks each code at its **actual loaded PAD voltage** (source impedance **35.92–50.35 Ω**, despite **49.20–50.72 Ω** at the fixed 0.25-V reference). An ideal gate-bias sweep shows that FF/FS can approach 50 Ω at the tested operating point, whereas SS/SF cannot do so within a 0.9–1.8-V gate-high range. Synthetic Gaussian RX noise and sampling jitter applied to *ngspice-generated waveforms* further indicate a conditional FFE decision-margin benefit, but are **not physical comparator/CDR or measured BER simulations**.
 
 Full verified results, uncertainties, open questions, links to the new CSVs and the exact run: [docs/p3_expanded_verification_2026-11-12.md](docs/p3_expanded_verification_2026-11-12.md).
+
+## NEW: executed exact lecture sim3_ffe.py and real adapted Verilator (Nov. 12)
+
+The **original** lecturer's `sim3_ffe.py` was run **unchanged** at 56 Gb/s
+in the private lecture fork, producing all 1/3/5/9-Tap outputs:
+[verified run](https://github.com/khi103/serdes-lecture-site/actions/runs/43142270060).
+Its original eye heights are -130.22 mV (no FFE), 70.58 mV (3-tap),
+72.89 mV (5-tap) and 74.84 mV (9-tap).
+
+The original lecturer's SystemVerilog `link.sv` was **also actually executed**
+under Verilator after scratch-copy parameter adaptation to **3.6 Gb/s**,
+synthetic -12 dB at 1.8 GHz, and a 2-Tap alpha=0.30 FFE:
+[verified modified run](https://github.com/khi103/serdes-lecture-site/actions/runs/43139646362).
+The 3.6-Gb/s RC2 eye is **35.17 mV without FFE vs 67.63 mV with FFE**.
+This is separate from the earlier self-contained Python surrogate,
+whose source file was not itself modified into Verilator.
+
+The **channel-shape control experiment** using real Verilator showed that
+1-, 2- and 3-pole synthetic channels having identical approximately 12-dB
+Nyquist loss produce materially different eyes. See the
+[channel sensitivity CI](https://github.com/khi103/serdes-lecture-site/actions/runs/43141054011).
+
+The latest MOS-PDK validations include hypothetical per-corner
+width re-trimming, gate slew variation, physical MOS DC I-V sanity,
+and synthetic RX noise/jitter/offset and functional CDR phase tracking.
+The details and all unavailable **original-chip** evidence are catalogued
+in [docs/P3_추가검증_종합보고서_20261112.md](docs/P3_추가검증_종합보고서_20261112.md).
+
