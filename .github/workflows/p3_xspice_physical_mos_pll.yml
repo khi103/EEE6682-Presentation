@@ -1,0 +1,33 @@
+name: P3 XSPICE 450MHz PFD to physical 7bit MOS CP and 1.8GHz MOS VCO
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_xspice_physical_mos_pll.py'
+      - '.github/workflows/p3_xspice_physical_mos_pll.yml'
+permissions:
+  contents: read
+jobs:
+  reference-pll:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE-capable ngspice binary
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+          ngspice --version | head -n 3
+      - name: Verify DB HiTek MOS PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run real MOS charge pump and MOS VCO under digital XSPICE phase-frequency detector
+        run: python3 simulation/p3_xspice_physical_mos_pll.py
+      - name: Retain measured lock acquisition and current-code tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-xspice-pfd-physical-mos-charge-pump-and-vco
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_xspice_real_mos_pll/
