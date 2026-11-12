@@ -127,7 +127,7 @@ def run(out:Path):
             shutil.copy2(model,target)
     bits=TX.prbs7(N_BITS)
     report={}
-    for corner in ("tt",):
+    for corner in ("tt","ff","ss"):
         for case,alpha in (("baseline",0),("ffe_0p30",.30)):
             runner.run(generate(bits,alpha,corner=corner),
                        f"integrated_{corner}_{case}")
@@ -150,7 +150,7 @@ def run(out:Path):
           "nonphysical_blocks":["TX gate source drivers","ideal 50-ohm VREF source",
                "two buffered RC channel poles","clock waveform source",
                "PLL, CDR, load demux and reference bias"],
-          "calibration":"TT TX widths fixed from independent source impedance test",
+          "calibration":"TT TX widths fixed from independent source impedance test; FF/SS use same sizing",
           "sample_latency_UI":SAMPLE_LATENCY_UI,
           "clock_eval_start_phase_UI":CLOCK_FALL_PHASE_UI,
           "observations":report,
