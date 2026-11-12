@@ -1,0 +1,50 @@
+{
+  "status": "alexander_like_behavioral_phase_tracking",
+  "loop_gain_UI_per_transition": 0.025,
+  "nominal_sampling_phase_UI": 1.2,
+  "method": "early/late transition majority with ideal static input threshold",
+  "scenarios": {
+    "baseline_start_-0.28": {
+      "start_phase_error_UI": -0.28,
+      "final_phase_error_UI": 0.019999999999999962,
+      "final_phase_error_ps": 5.555555555555545,
+      "transitions_tracked": 38,
+      "final_20_steps_mean_phase_error_UI": -0.007500000000000039,
+      "raw_decision_error_count": 13,
+      "limitation": "relative phase is the model's data-sampling phase correction, not a measured PLL phase"
+    },
+    "baseline_start_+0.28": {
+      "start_phase_error_UI": 0.28,
+      "final_phase_error_UI": 0.13000000000000003,
+      "final_phase_error_ps": 36.11111111111112,
+      "transitions_tracked": 50,
+      "final_20_steps_mean_phase_error_UI": 0.14,
+      "raw_decision_error_count": 0,
+      "limitation": "relative phase is the model's data-sampling phase correction, not a measured PLL phase"
+    },
+    "ffe_alpha_0p30_start_-0.28": {
+      "start_phase_error_UI": -0.28,
+      "final_phase_error_UI": 0.019999999999999962,
+      "final_phase_error_ps": 5.555555555555545,
+      "transitions_tracked": 50,
+      "final_20_steps_mean_phase_error_UI": -0.007500000000000039,
+      "raw_decision_error_count": 0,
+      "limitation": "relative phase is the model's data-sampling phase correction, not a measured PLL phase"
+    },
+    "ffe_alpha_0p30_start_+0.28": {
+      "start_phase_error_UI": 0.28,
+      "final_phase_error_UI": 0.03000000000000004,
+      "final_phase_error_ps": 8.333333333333345,
+      "transitions_tracked": 50,
+      "final_20_steps_mean_phase_error_UI": 0.002500000000000039,
+      "raw_decision_error_count": 0,
+      "limitation": "relative phase is the model's data-sampling phase correction, not a measured PLL phase"
+    }
+  },
+  "limitations": [
+    "Only 128 PRBS symbols, reused ngspice waveforms and first-order phase updates",
+    "No charge pump current mismatch / phase detector metastability / VCO noise / recovered PLL",
+    "Not original Wong et al. timing recovery hardware",
+    "Phase convergence is a qualitative loop sensitivity example, not BER validation"
+  ]
+}
