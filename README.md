@@ -202,3 +202,29 @@ qualification across the tested gains. That experiment should be treated
 as a physical/control design shortcoming, NOT as an achieved PLL/CDR.
 The verified Fig19 case uses a two-pass MOS/behavioral co-simulation
 and an assumed current-to-phase transfer function.
+
+## Nov. 12 independent verification audit: limits and corrected scoring
+
+**Full Korean technical audit, all run URLs, PASS/FAIL and remaining dependencies:**
+[docs/P3_20261112_추가검증_결과및한계.md](docs/P3_20261112_추가검증_결과및한계.md).
+
+New XSPICE reference-PFD / switched-MOS CP / MOS-VCO PLL reaches **1.800020 GHz**
+in the TT nominal case, and can drive the real MOS TX/RX circuit in one netlist.
+TT/SS and selected timing/temperature conditions pass the stated lock screens;
+the original FF/FS/SF tests have failures. FF-only MOS current scaling improved
+that corner, but one invariant PVT-robust design is **not established**.
+
+An initial MOS-RX FFE comparison used nearest-integer bit mapping, which
+could duplicate or omit physical samples. An independently corrected
+PRBS31 **358-held-out-UI audit** finds **27/358 no-FFE errors (including
+2 missing) versus 2/358 (both missing) for each tested alpha
+0.15/0.30/0.45**. These runs do **not** establish an alpha=0.30
+uniquely optimal setting or statistical BER.
+
+The data-only Fig19-style controller still uses an **assumed
+current-to-phase transfer function** and ideal PWL clock (not in-SPICE
+data CDR). Separate same-SPICE behavioral data PD injection into the
+MOS PLL reduced one PRBS31 phase-offset case from **40/227 to 6/227**
+errors, but did **not** qualify as physical data CDR lock. See the
+full audit for the PRBS31, negative-ppm, FF, switched-filter and
+license/PDK limitations.
