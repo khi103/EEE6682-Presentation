@@ -1,0 +1,33 @@
+name: P3 in-ngspice feedback frequency control of physical MOS VCO
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_vco_frequency_feedback.py'
+      - '.github/workflows/p3_mos_vco_fll.yml'
+permissions:
+  contents: read
+jobs:
+  fll:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test in-circuit frequency feedback around the MOS VCO
+        run: python3 simulation/p3_mos_vco_frequency_feedback.py
+      - name: Preserve evidence of capture success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-physical-mos-vco-frequency-feedback
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_in_spice_fll/
