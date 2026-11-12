@@ -1,0 +1,43 @@
+name: P3 complete experimental MOS serial-data 4XOR 7bit counter phase loop
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_real_mos_7bit_data_counter.py'
+      - '.github/workflows/p3_real_mos_7bit_data_counter.yml'
+permissions:
+  contents: read
+jobs:
+  real-mos-counter-cdr:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        seed: ['0x54C4EE17', '0x13572468']
+        shift: [-0.05, 0.95]
+        step_mv: [-2.0, 0.0, 2.0, 4.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE mixed-mode ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing authorized 180nm MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Execute full mixed-signal data-driven seven-bit counter with MOS actuator
+        run: >
+          python3 simulation/p3_real_mos_7bit_data_counter.py
+          --seed ${{ matrix.seed }}
+          --shift ${{ matrix.shift }}
+          --step-mv ${{ matrix.step_mv }}
+      - name: Preserve every physical MOS counter clock and receiver decision
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-seven-bit-physical-CDR-${{ matrix.seed }}-${{ matrix.shift }}-${{ matrix.step_mv }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_real_7bit_MOS_data_counter/
