@@ -1,0 +1,34 @@
+name: P3 physical CMOS current-starved ring VCO 180nm
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_ring_vco_mos.py'
+      - '.github/workflows/p3_ring_vco.yml'
+
+permissions:
+  contents: read
+jobs:
+  vco:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install transistor simulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate DB HiTek MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Simulate MOS current-starved ring VCO PVT/bias
+        run: python3 simulation/p3_ring_vco_mos.py
+      - name: Preserve VCO spectrum/period measurements without PDK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-180nm-physical-mos-vco
+          retention-days: 90
+          if-no-files-found: warn
+          path:
+            results/spice/p3_ring_vco/
