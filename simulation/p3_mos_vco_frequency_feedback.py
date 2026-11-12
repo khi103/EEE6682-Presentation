@@ -20,7 +20,7 @@ PERIOD_NS=.5555555556
 RUN_NS=220.
 CLOOP=20e-12
 GAIN=3e-3
-TRIM_BIAS=(.78, .94)
+TRIM_BIAS=(.82, 1.00)
 
 def deck(initial_v, gain=GAIN, reference_detector_scale=1., stop_ns=RUN_NS):
     lines=[
@@ -109,7 +109,7 @@ def run(out):
     # Calibrate different output edge slopes of ideal ref and physical MOS VCO.
     # In-circuit feedback still controls physical MOS bias; per-edge detector
     # gain is independently calibrated here once at nearly the target frequency.
-    reference_bias=.86
+    reference_bias=.94
     runner.run(deck(reference_bias,gain=0,stop_ns=65.),
                "fll_detector_calibration")
     cal=parse(work/"fll.csv")
