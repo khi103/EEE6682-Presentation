@@ -16,13 +16,27 @@ control. Partial source power includes these added CMOS gates but not
 the entire original 27.12mW link budget.
 """
 from __future__ import annotations
-import argparse,csv,json,math,shutil
+import argparse,csv,json,math,shutil,subprocess,re
 from pathlib import Path
 import p3_transistor_driver as TX
 import p3_reference_pll_integrated_mos_link as LINK
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
 import audit_physical_mos_ffe_coverage as AUDIT
+
+class TXGateLargeRunner(TX.SpiceRunner):
+    """Override 90s generic runner limit for the fully buffered, 1.3us deck."""
+    def run(self,deck,tag):
+        cir=self.working/f"{tag}.cir"
+        cir.write_text(deck)
+        process=subprocess.run(["ngspice","-b",cir.name],cwd=self.working,
+                               capture_output=True,text=True,timeout=300)
+        self.calls+=1
+        output=process.stdout+"\n"+process.stderr
+        if (process.returncode!=0 or
+                re.search(r"(^|\n)\s*(Error|Fatal)\s*[:o]",output,re.I)):
+            raise RuntimeError(f"NGSPICE failed {tag}:\n{output[-4000:]}")
+        return output
 
 ALPHAS=(0.,.30)
 MODES=("ideal", "physical")
@@ -77,7 +91,7 @@ def main(out,mode,alpha):
     out.mkdir(parents=True,exist_ok=True)
     label=f"{mode}_alpha_{alpha:.2f}".replace(".","p")
     work=TX.ENGINE_DIR/("p3_mos_tx_prebuffer_"+label)
-    runner=TX.SpiceRunner(work)
+    runner=TXGateLargeRunner(work)
     src=TX.model_path("tt");dst=work/src.name
     if not dst.exists() or src.stat().st_mtime>dst.stat().st_mtime:
         shutil.copy2(src,dst)
