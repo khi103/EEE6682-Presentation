@@ -1,0 +1,43 @@
+name: P3 fine-gain 512bit real MOS 7bit data CDR challenge
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_fine_512_mos_cdr_gain.py'
+      - '.github/workflows/p3_fine_512_mos_cdr_gain.yml'
+permissions:
+  contents: read
+jobs:
+  fine-counter-step:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        seed: ['0x54C4EE17','0x13572468']
+        phase: [-0.05,0.95]
+        step: [0.5,1.0,1.5,3.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mixed-signal 180nm MOS simulation engine
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing licensed MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run strict full PRBS31 physical MOS four-XOR seven-bit phase gain test
+        run: >
+          python3 simulation/p3_fine_512_mos_cdr_gain.py
+          --seed ${{ matrix.seed }}
+          --phase ${{ matrix.phase }}
+          --step ${{ matrix.step }}
+      - name: Preserve positive and negative physical MOS bit and counter histories
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-512bit-fine-gain-MOS-CDR-${{ matrix.seed }}-${{ matrix.phase }}-${{ matrix.step }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_fine_512_MOS_CDR/
