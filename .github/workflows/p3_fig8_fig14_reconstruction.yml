@@ -1,0 +1,68 @@
+name: P3 Fig8 replica calibration and Fig14 MOS comparator
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_fig8_dual_replica_feedback.py'
+      - 'simulation/p3_fig14_comparator_mos.py'
+      - '.github/workflows/p3_fig8_fig14_reconstruction.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fig8-replica-impedance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip python3
+      - name: Check the DB HiTek SVT model
+        run: |
+          bash scripts/run_dbhitek_smoke.sh
+          python3 scripts/validate_dbhitek_inverter.py
+      - name: Simulate two MOS replica loops and six-bit trim across five corners
+        run: python3 simulation/p3_fig8_dual_replica_feedback.py
+      - name: Upload numerical evidence (never foundry source)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-fig8-inspired-mos-replica-loop
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            results/spice/p3_segmented_driver/fig8_dual_replica_feedback.json
+            results/spice/p3_segmented_driver/fig8_dual_replica_feedback.csv
+            results/spice/p3_segmented_driver/fig8_feedback_servo_history.csv
+
+  fig14-comparator:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip python3
+      - name: Check the DB HiTek SVT model
+        run: |
+          bash scripts/run_dbhitek_smoke.sh
+          python3 scripts/validate_dbhitek_inverter.py
+      - name: Simulate PMOS-input MOS preamp + CMOS slicer at five corners
+        run: python3 simulation/p3_fig14_comparator_mos.py
+      - name: Upload numerical evidence (never foundry source)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-fig14-inspired-mos-comparator
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            results/spice/p3_fig14_comparator/fig14_comparator_summary.json
+            results/spice/p3_fig14_comparator/fig14_comparator_dc.csv
+            results/spice/p3_fig14_comparator/fig14_comparator_transient.csv
