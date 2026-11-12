@@ -1,0 +1,131 @@
+{
+  "status": "passed_ideal_gate_slew_sensitivity_sweep",
+  "basis": "ngspice DB HiTek 180nm NMOS TX output, ideal PWL gate controls",
+  "rate_Gbps": 3.6,
+  "fixed_sampling_delay_UI": 1.2,
+  "gate_edge_ps": [
+    2.0,
+    25.0,
+    60.0,
+    110.0,
+    180.0
+  ],
+  "results": [
+    {
+      "gate_ideal_0to100_edge_ps": 2.0,
+      "ffe_alpha": 0.0,
+      "name": "no_ffe",
+      "eye_common_sample_mV": 50.95893844900168,
+      "eye_optimized_mV": 50.95893844900168,
+      "time_weighted_signal_supply_mW": 0.6885249674125484,
+      "pad_min_mV": 69.75454490000001,
+      "pad_max_mV": 383.943356,
+      "samples": 9910
+    },
+    {
+      "gate_ideal_0to100_edge_ps": 2.0,
+      "ffe_alpha": 0.3,
+      "name": "two_tap_ffe",
+      "eye_common_sample_mV": 90.00611586635834,
+      "eye_optimized_mV": 90.58662424343899,
+      "time_weighted_signal_supply_mW": 0.92754039607801,
+      "pad_min_mV": 69.75454490000001,
+      "pad_max_mV": 383.943355,
+      "samples": 9940
+    },
+    {
+      "gate_ideal_0to100_edge_ps": 25.0,
+      "ffe_alpha": 0.0,
+      "name": "no_ffe",
+      "eye_common_sample_mV": 50.70539785826278,
+      "eye_optimized_mV": 50.70539785826278,
+      "time_weighted_signal_supply_mW": 0.6771836678079377,
+      "pad_min_mV": 90.19008219999999,
+      "pad_max_mV": 383.936179,
+      "samples": 9608
+    },
+    {
+      "gate_ideal_0to100_edge_ps": 25.0,
+      "ffe_alpha": 0.3,
+      "name": "two_tap_ffe",
+      "eye_common_sample_mV": 90.20532643693316,
+      "eye_optimized_mV": 90.66544318699471,
+      "time_weighted_signal_supply_mW": 0.9140631782546939,
+      "pad_min_mV": 90.19008269999999,
+      "pad_max_mV": 383.936179,
+      "samples": 9608
+    },
+    {
+      "gate_ideal_0to100_edge_ps": 60.0,
+      "ffe_alpha": 0.0,
+      "name": "no_ffe",
+      "eye_common_sample_mV": 49.84463174959211,
+      "eye_optimized_mV": 49.84463174959211,
+      "time_weighted_signal_supply_mW": 0.6639740655585992,
+      "pad_min_mV": 94.4886676,
+      "pad_max_mV": 383.936143,
+      "samples": 9607
+    },
+    {
+      "gate_ideal_0to100_edge_ps": 60.0,
+      "ffe_alpha": 0.3,
+      "name": "two_tap_ffe",
+      "eye_common_sample_mV": 89.83749174037776,
+      "eye_optimized_mV": 90.09382841830568,
+      "time_weighted_signal_supply_mW": 0.8973322706285541,
+      "pad_min_mV": 94.4886676,
+      "pad_max_mV": 383.936143,
+      "samples": 9607
+    },
+    {
+      "gate_ideal_0to100_edge_ps": 110.0,
+      "ffe_alpha": 0.0,
+      "name": "no_ffe",
+      "eye_common_sample_mV": 47.40566061614152,
+      "eye_optimized_mV": 47.40566061614152,
+      "time_weighted_signal_supply_mW": 0.6473637005397089,
+      "pad_min_mV": 96.02501480000001,
+      "pad_max_mV": 384.38967299999996,
+      "samples": 9607
+    },
+    {
+      "gate_ideal_0to100_edge_ps": 110.0,
+      "ffe_alpha": 0.3,
+      "name": "two_tap_ffe",
+      "eye_common_sample_mV": 88.03649947355561,
+      "eye_optimized_mV": 88.03649947355561,
+      "time_weighted_signal_supply_mW": 0.8754074999755084,
+      "pad_min_mV": 96.02501480000001,
+      "pad_max_mV": 384.38967299999996,
+      "samples": 9607
+    },
+    {
+      "gate_ideal_0to100_edge_ps": 180.0,
+      "ffe_alpha": 0.0,
+      "name": "no_ffe",
+      "eye_common_sample_mV": 41.79752412836929,
+      "eye_optimized_mV": 42.23755658623668,
+      "time_weighted_signal_supply_mW": 0.6250698967229554,
+      "pad_min_mV": 96.7619537,
+      "pad_max_mV": 384.362464,
+      "samples": 9607
+    },
+    {
+      "gate_ideal_0to100_edge_ps": 180.0,
+      "ffe_alpha": 0.3,
+      "name": "two_tap_ffe",
+      "eye_common_sample_mV": 82.78344940505836,
+      "eye_optimized_mV": 82.78344940505836,
+      "time_weighted_signal_supply_mW": 0.845507657603519,
+      "pad_min_mV": 96.7619537,
+      "pad_max_mV": 384.362464,
+      "samples": 9607
+    }
+  ],
+  "notes": [
+    "PWL 0-to-100 gate edge is not the measured TX 10-to-90 data edge",
+    "Not the actual published predriver or slew-control circuit",
+    "Measured power is only the 0.5V signal supply, not the digital gate drivers/clock",
+    "Same receiver channel RC2 surrogate; source impedance calibration only TT"
+  ]
+}

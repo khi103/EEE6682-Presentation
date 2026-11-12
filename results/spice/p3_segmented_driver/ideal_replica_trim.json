@@ -1,0 +1,415 @@
+{
+  "status": "passed_ideal_replica_width_authority_test",
+  "measurement": "5 codes per corner, fixed 0.25-V replica and each actual loaded pad voltage",
+  "trim": "hypothetical continuous width scale; actual MOS fingers and feedback NOT modeled",
+  "original_widths_um": {
+    "up": 1.4896875,
+    "down": 1.4896875
+  },
+  "per_corner_calibration": {
+    "tt": {
+      "bracketed": true,
+      "scale": 1.0,
+      "rout_ref": 49.997500124993714,
+      "history": [
+        [
+          0.55,
+          91.58767229930841
+        ],
+        [
+          1.75,
+          28.48191398461978
+        ],
+        [
+          1.15,
+          43.44048653344916
+        ],
+        [
+          0.85,
+          58.891080945790584
+        ],
+        [
+          1.0,
+          49.997500124993714
+        ],
+        [
+          0.925,
+          54.08036342004223
+        ],
+        [
+          0.9625,
+          51.958848591915206
+        ],
+        [
+          0.98125,
+          50.95930899176999
+        ],
+        [
+          0.990625,
+          50.473186119873745
+        ],
+        [
+          0.9953125,
+          50.23484791399783
+        ],
+        [
+          0.99765625,
+          50.11526510975234
+        ],
+        [
+          0.998828125,
+          50.05631335252153
+        ],
+        [
+          0.9994140625,
+          50.02626378848896
+        ],
+        [
+          0.99970703125,
+          50.01125253181957
+        ]
+      ]
+    },
+    "ff": {
+      "bracketed": true,
+      "scale": 0.8558593750000001,
+      "rout_ref": 50.00000000000001,
+      "history": [
+        [
+          0.55,
+          78.0365991650084
+        ],
+        [
+          1.75,
+          24.48579823702253
+        ],
+        [
+          1.15,
+          37.237013591509964
+        ],
+        [
+          0.85,
+          50.344862306801566
+        ],
+        [
+          1.0,
+          42.808219178082304
+        ],
+        [
+          0.925,
+          46.271660921268655
+        ],
+        [
+          0.8875,
+          48.22298307373281
+        ],
+        [
+          0.8687499999999999,
+          49.26108374384235
+        ],
+        [
+          0.859375,
+          49.797076911585336
+        ],
+        [
+          0.8546875,
+          50.06884466140944
+        ],
+        [
+          0.85703125,
+          49.93259100214713
+        ],
+        [
+          0.8558593750000001,
+          50.00000000000001
+        ],
+        [
+          0.8564453125,
+          49.96627276588305
+        ],
+        [
+          0.85615234375,
+          49.98375527953417
+        ]
+      ]
+    },
+    "ss": {
+      "bracketed": true,
+      "scale": 1.1710937499999998,
+      "rout_ref": 49.99875003124921,
+      "history": [
+        [
+          0.55,
+          107.93890657887613
+        ],
+        [
+          1.75,
+          33.32777870354948
+        ],
+        [
+          1.15,
+          50.92816582210791
+        ],
+        [
+          1.45,
+          40.281973816716985
+        ],
+        [
+          1.2999999999999998,
+          44.994375703036994
+        ],
+        [
+          1.2249999999999999,
+          47.766897540004706
+        ],
+        [
+          1.1875,
+          49.297510475721005
+        ],
+        [
+          1.16875,
+          50.095180843602854
+        ],
+        [
+          1.178125,
+          49.695614362032615
+        ],
+        [
+          1.1734375,
+          49.9014446468226
+        ],
+        [
+          1.1710937499999998,
+          49.99875003124921
+        ],
+        [
+          1.169921875,
+          50.04629282085922
+        ],
+        [
+          1.1705078125,
+          50.022510129558256
+        ],
+        [
+          1.1708007812499999,
+          50.01625528296695
+        ]
+      ]
+    },
+    "fs": {
+      "bracketed": true,
+      "scale": 0.8690429687499999,
+      "rout_ref": 50.007501125168766,
+      "history": [
+        [
+          0.55,
+          79.31472081218276
+        ],
+        [
+          1.75,
+          24.841634579555336
+        ],
+        [
+          1.15,
+          37.80003780003781
+        ],
+        [
+          0.85,
+          51.12735824939927
+        ],
+        [
+          1.0,
+          43.45936549326388
+        ],
+        [
+          0.925,
+          46.982545984166876
+        ],
+        [
+          0.8875,
+          48.96799941238409
+        ],
+        [
+          0.8687499999999999,
+          50.02376128661111
+        ],
+        [
+          0.8781249999999999,
+          49.491475093415204
+        ],
+        [
+          0.8734374999999999,
+          49.7561946462334
+        ],
+        [
+          0.8710937499999999,
+          49.89024146876874
+        ],
+        [
+          0.869921875,
+          49.95753609431984
+        ],
+        [
+          0.8693359374999999,
+          49.990001999600196
+        ],
+        [
+          0.8690429687499999,
+          50.007501125168766
+        ]
+      ]
+    },
+    "sf": {
+      "bracketed": true,
+      "scale": 1.1582031249999998,
+      "rout_ref": 49.997500124993714,
+      "history": [
+        [
+          0.55,
+          106.6041255796602
+        ],
+        [
+          1.75,
+          32.976092333058546
+        ],
+        [
+          1.15,
+          50.362610797743734
+        ],
+        [
+          1.45,
+          39.848575413429074
+        ],
+        [
+          1.2999999999999998,
+          44.49388209121248
+        ],
+        [
+          1.2249999999999999,
+          47.24781478856611
+        ],
+        [
+          1.1875,
+          48.75670404680655
+        ],
+        [
+          1.16875,
+          49.54173891503583
+        ],
+        [
+          1.1593749999999998,
+          49.95504046358275
+        ],
+        [
+          1.1546874999999999,
+          50.151708919481244
+        ],
+        [
+          1.1570312499999997,
+          50.05255518294211
+        ],
+        [
+          1.1582031249999998,
+          49.997500124993714
+        ],
+        [
+          1.1576171874999996,
+          50.02501250625311
+        ],
+        [
+          1.1579101562499998,
+          50.01750612714451
+        ]
+      ]
+    }
+  },
+  "per_corner_comparison": {
+    "tt": {
+      "fixed_TT_sizing": {
+        "mean_pct_error_fixed_reference": 0.974611809463941,
+        "max_pct_error_fixed_reference": 1.603857128799402,
+        "mean_pct_error_actual_pad": 11.42222591906597,
+        "max_pct_error_actual_pad": 28.160919540230168,
+        "nominal_power_mean_mW": 1.011340000961003
+      },
+      "ideal_per_corner_retrim": {
+        "mean_pct_error_fixed_reference": 0.974611809463941,
+        "max_pct_error_fixed_reference": 1.603857128799402,
+        "mean_pct_error_actual_pad": 11.42222591906597,
+        "max_pct_error_actual_pad": 28.160919540230168,
+        "nominal_power_mean_mW": 1.011340000961003
+      }
+    },
+    "ff": {
+      "fixed_TT_sizing": {
+        "mean_pct_error_fixed_reference": 14.430632755456434,
+        "max_pct_error_fixed_reference": 15.597569209993722,
+        "mean_pct_error_actual_pad": 25.648155786713563,
+        "max_pct_error_actual_pad": 40.52928932500741,
+        "nominal_power_mean_mW": 1.17447500341157
+      },
+      "ideal_per_corner_retrim": {
+        "mean_pct_error_fixed_reference": 0.8890546553137991,
+        "max_pct_error_fixed_reference": 1.458415451320183,
+        "mean_pct_error_actual_pad": 12.30604042731293,
+        "max_pct_error_actual_pad": 28.93942085627953,
+        "nominal_power_mean_mW": 1.03202700215276
+      }
+    },
+    "ss": {
+      "fixed_TT_sizing": {
+        "mean_pct_error_fixed_reference": 17.260102275474427,
+        "max_pct_error_fixed_reference": 19.26058437686544,
+        "mean_pct_error_actual_pad": 10.956841849414968,
+        "max_pct_error_actual_pad": 16.98642957416958,
+        "nominal_power_mean_mW": 0.8662950007669921
+      },
+      "ideal_per_corner_retrim": {
+        "mean_pct_error_fixed_reference": 1.0787892901060103,
+        "max_pct_error_fixed_reference": 1.7705852017377843,
+        "mean_pct_error_actual_pad": 10.628617315959215,
+        "max_pct_error_actual_pad": 27.62800796091921,
+        "nominal_power_mean_mW": 0.9908150007808529
+      }
+    },
+    "fs": {
+      "fixed_TT_sizing": {
+        "mean_pct_error_fixed_reference": 13.134997647663075,
+        "max_pct_error_fixed_reference": 14.41104097571414,
+        "mean_pct_error_actual_pad": 24.686887774125132,
+        "max_pct_error_actual_pad": 40.01199760047985,
+        "nominal_power_mean_mW": 1.16289100366552
+      },
+      "ideal_per_corner_retrim": {
+        "mean_pct_error_fixed_reference": 0.9631911049529895,
+        "max_pct_error_fixed_reference": 1.5530014028680483,
+        "mean_pct_error_actual_pad": 12.553621252044682,
+        "max_pct_error_actual_pad": 29.49056936365246,
+        "nominal_power_mean_mW": 1.03457100239038
+      }
+    },
+    "sf": {
+      "fixed_TT_sizing": {
+        "mean_pct_error_fixed_reference": 15.932880131203229,
+        "max_pct_error_fixed_reference": 17.78563015311989,
+        "mean_pct_error_actual_pad": 10.40722463095813,
+        "max_pct_error_actual_pad": 15.693874009371566,
+        "nominal_power_mean_mW": 0.873068000764933
+      },
+      "ideal_per_corner_retrim": {
+        "mean_pct_error_fixed_reference": 1.021608407771224,
+        "max_pct_error_fixed_reference": 1.6715830875111637,
+        "mean_pct_error_actual_pad": 10.41497551948517,
+        "max_pct_error_actual_pad": 27.140255009107005,
+        "nominal_power_mean_mW": 0.9889190007759681
+      }
+    }
+  },
+  "ngspice_calls": 390,
+  "limitations": [
+    "Hypothetical per-corner width tuning is not a physical closed-loop controller",
+    "Replica is code 7 only and at fixed VREF, not all 16 codes/voltage states",
+    "Continuous width scaling is not discrete hardware, and bin changes may affect interpolation",
+    "Actual 2004 Fig. 8 feedback, predriver/slew, process model and power not reconstructed"
+  ]
+}
