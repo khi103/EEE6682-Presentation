@@ -1,0 +1,33 @@
+name: P3 in-SPICE data-transition CDR phase feedback with MOS TX RX VCO
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_in_spice_data_transition_cdr.py'
+      - '.github/workflows/p3_in_spice_data_cdr.yml'
+
+permissions:
+  contents: read
+jobs:
+  cdr-phase-loop:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate MOS PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Evaluate in-SPICE data phase detector controlling physical MOS VCO
+        run: python3 simulation/p3_in_spice_data_transition_cdr.py
+      - name: Keep evidence including failures and all trial gains
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-in-spice-data-transition-cdr-mos-vco
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_in_spice_data_cdr/
