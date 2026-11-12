@@ -1,0 +1,37 @@
+name: P3 SS-corner physical MOS 7bit pump code calibration authority
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_ss_charge_pump_code.py'
+      - '.github/workflows/p3_mos_ss_cp_code.yml'
+permissions:
+  contents: read
+jobs:
+  ss-code:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        code: [0, 8, 16, 24, 32, 40, 48, 56, 63, 72, 96, 127]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Execute physical MOS 7-bit pump code SS corner acquisition
+        run: python3 simulation/p3_mos_ss_charge_pump_code.py --code ${{ matrix.code }}
+      - name: Retain physically simulated current-code and PLL lock evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ss-physical-mos-7bit-CP-${{ matrix.code }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_SS_physical_MOS_CP_trim/
