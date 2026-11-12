@@ -1,0 +1,35 @@
+name: P3 shared-frame heldout physical TX predriver FFE audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/p3_audit_predriver_ffe_common_lag.py'
+      - '.github/workflows/p3_audit_predriver_ffe_common_lag.yml'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  one-frame:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve immutable previously executed 180nm physical MOS receiver samples
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 43179781968
+          pattern: p3-physical-TX-buffer-MOS-phase-*
+          merge-multiple: true
+          path: original_MOS_samples/
+      - name: Fit one common lag on training bits only then evaluate FFE heldout symbols
+        run: python3 scripts/p3_audit_predriver_ffe_common_lag.py --in-dir original_MOS_samples/
+      - name: Preserve independent MOS receiver decision audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-full-mos-ffe-one-common-frame-audit
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/audit/p3_actual_predriver_ffe/
