@@ -1,0 +1,76 @@
+name: P3 fixed common MOS PLL design cross-PVT sentinel qualification
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_global_pvt_candidate.py'
+      - '.github/workflows/p3_global_pvt_candidate.yml'
+permissions:
+  contents: read
+jobs:
+  sentinel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { design: fixed_080, scenario: ss_low }
+          - { design: fixed_080, scenario: ss_cold }
+          - { design: fixed_080, scenario: ss_nominal }
+          - { design: fixed_080, scenario: ff_high }
+          - { design: fixed_080, scenario: ff_cold }
+          - { design: fixed_080, scenario: ff_nominal }
+          - { design: fixed_080, scenario: tt_nominal }
+          - { design: fixed_080, scenario: fs_nominal }
+          - { design: fixed_080, scenario: sf_nominal }
+          - { design: fixed_070, scenario: ss_low }
+          - { design: fixed_070, scenario: ss_cold }
+          - { design: fixed_070, scenario: ss_nominal }
+          - { design: fixed_070, scenario: ff_high }
+          - { design: fixed_070, scenario: ff_cold }
+          - { design: fixed_070, scenario: ff_nominal }
+          - { design: fixed_070, scenario: tt_nominal }
+          - { design: fixed_070, scenario: fs_nominal }
+          - { design: fixed_070, scenario: sf_nominal }
+          - { design: tracked_091, scenario: ss_low }
+          - { design: tracked_091, scenario: ss_cold }
+          - { design: tracked_091, scenario: ss_nominal }
+          - { design: tracked_091, scenario: ff_high }
+          - { design: tracked_091, scenario: ff_cold }
+          - { design: tracked_091, scenario: ff_nominal }
+          - { design: tracked_091, scenario: tt_nominal }
+          - { design: tracked_091, scenario: fs_nominal }
+          - { design: tracked_091, scenario: sf_nominal }
+          - { design: tracked_graded, scenario: ss_low }
+          - { design: tracked_graded, scenario: ss_cold }
+          - { design: tracked_graded, scenario: ss_nominal }
+          - { design: tracked_graded, scenario: ff_high }
+          - { design: tracked_graded, scenario: ff_cold }
+          - { design: tracked_graded, scenario: ff_nominal }
+          - { design: tracked_graded, scenario: tt_nominal }
+          - { design: tracked_graded, scenario: fs_nominal }
+          - { design: tracked_graded, scenario: sf_nominal }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mixed-mode ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate existing authorized MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test common MOS CP bias topology across PVT (no per-corner tuning)
+        run: >
+          python3 simulation/p3_global_pvt_candidate.py
+          --design ${{ matrix.design }}
+          --scenario ${{ matrix.scenario }}
+      - name: Preserve electrical PVT qualification and negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-global-PVT-${{ matrix.design }}-${{ matrix.scenario }}
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/spice/p3_global_PVT_candidate/
