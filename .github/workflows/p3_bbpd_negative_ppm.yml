@@ -1,0 +1,32 @@
+name: P3 BBPD PRBS31 negative ppm sensitivity
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/stress_prbs31_cdr_negative_ppm.py'
+      - '.github/workflows/p3_bbpd_negative_ppm.yml'
+permissions:
+  contents: read
+jobs:
+  sweep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify DB HiTek MOS
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run PRBS31 negative CDR drift sweep through physical MOS RX latches
+        run: python3 scripts/stress_prbs31_cdr_negative_ppm.py
+      - name: Preserve counter histories and actual MOS decisions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-prbs31-physical-mos-bbpd-negative-ppm
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_prbs31_negative_ppm/
