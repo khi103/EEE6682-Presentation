@@ -97,7 +97,10 @@ def circuit(code,corner=CORNER,initial_bias=V_START):
         f"CLOOP lpcap 0 {LOOP_C_F:.10g} ic={initial_bias:.7g}",
         f"CFAST loopctrl 0 5p ic={initial_bias:.7g}",
         "RLEAK loopctrl vstart 5e8",
-        "BNB nb 0 V={min(max(v(loopctrl),.65),1.65)}",
+        "* Third pole to attenuate 450MHz pump ripple at the physical VCO gate.",
+        "RPOST loopctrl vcobias 700",
+        f"CPOST vcobias 0 8p ic={initial_bias:.7g}",
+        "BNB nb 0 V={min(max(v(vcobias),.65),1.65)}",
         "BPB pb 0 V={1.8-v(nb)}",
     ]
     for i in range(1,RING.STAGES+1):
@@ -112,10 +115,10 @@ def circuit(code,corner=CORNER,initial_bias=V_START):
         ]
     lines += [
         ".ic "+" ".join(f"v(n{i})={'1.8' if i%2 else '0'}" for i in range(1,RING.STAGES+1))
-            + f" v(lpcap)={initial_bias:.7g} v(loopctrl)={initial_bias:.7g}",
+            + f" v(lpcap)={initial_bias:.7g} v(loopctrl)={initial_bias:.7g} v(vcobias)={initial_bias:.7g}",
         ".control","set noaskquit",
         f"tran 3p {TIME_NS}n uic",
-        "wrdata physical_pll.csv time v(n1) v(refclk) v(loopctrl) "
+        "wrdata physical_pll.csv time v(n1) v(refclk) v(loopctrl) v(vcobias) "
            "v(upbar) v(dngate) i(vdd)",
         "quit",".endc",".end",
     ]
@@ -126,10 +129,11 @@ def read(path):
     for line in path.read_text().splitlines():
         try: a=[float(x) for x in line.split()]
         except ValueError: continue
-        if len(a)>=14 and all(math.isfinite(x) for x in a):
+        if len(a)>=16 and all(math.isfinite(x) for x in a):
             rows.append({
                "time_s":a[0],"vco_V":a[3],"ref_V":a[5],"control_V":a[7],
-               "UPbar_V":a[9],"DN_V":a[11],"vdd_A":a[13]})
+               "physical_vco_gate_bias_V":a[9],
+               "UPbar_V":a[11],"DN_V":a[13],"vdd_A":a[15]})
     if len(rows)<400:
         raise RuntimeError(f"XSPICE PLL waveform missing rows {len(rows)}")
     return rows
@@ -154,6 +158,7 @@ def metrics(rows):
     vco_f=1/mean/1e9
     ref_f=1/(sum(r)/len(r))/1e6 if r else None
     ctl=[x["control_V"] for x in rows if x["time_s"]>=(TIME_NS-30)*1e-9]
+    vgate=[x["physical_vco_gate_bias_V"] for x in rows if x["time_s"]>=(TIME_NS-30)*1e-9]
     return {
         "vco_GHz":vco_f,
         "reference_MHz":ref_f,
@@ -161,6 +166,7 @@ def metrics(rows):
         "control_mean_V":sum(ctl)/len(ctl),
         "control_delta_last_30ns_mV":(max(ctl)-min(ctl))*1e3,
         "control_last_V":rows[-1]["control_V"],
+        "physical_vco_gate_ripple_mV":(max(vgate)-min(vgate))*1e3,
         "pump_UPbar_mean_V":sum(r["UPbar_V"] for r in rows[-1000:])/1000.,
         "pump_DN_mean_V":sum(r["DN_V"] for r in rows[-1000:])/1000.,
         "periods":len(d)
@@ -210,13 +216,14 @@ def main(out):
         m["frequency_near_1p8GHz"]=bool(m.get("vco_GHz") and abs(m["vco_GHz"]-RATE_GHZ)<.012)
         m["candidate_phase_locked"]=bool(m["frequency_near_1p8GHz"] and
              m.get("std_phase_ps") is not None and m["std_phase_ps"]<8 and
-             m["control_delta_last_30ns_mV"]<12)
+             m["physical_vco_gate_ripple_mV"]<5)
         cases[str(code)]=m
         print(f"XSPICE PFD -> switched MOS CP -> physical MOS VCO "
               f"code={code} fVCO={m.get('vco_GHz')}GHz "
               f"VCTRL={m['control_last_V']:.4f}V "
               f"VCTRLpp={m.get('control_delta_last_30ns_mV')}mV "
               f"PhaseStd={m.get('std_phase_ps')}ps "
+              f"VCOGateRipple={m.get('physical_vco_gate_ripple_mV')}mV "
               f"locked={m['candidate_phase_locked']}",flush=True)
         if code==63:
             with (out/"xspice_pfd_mos_cp_vco_code63_waveform.csv").open("w",newline="") as f:
