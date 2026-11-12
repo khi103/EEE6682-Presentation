@@ -7,6 +7,7 @@ on:
     paths:
       - 'simulation/p3_fig8_dual_replica_feedback.py'
       - 'simulation/p3_fig14_comparator_mos.py'
+      - 'simulation/p3_fig14_offset_current_trim.py'
       - '.github/workflows/p3_fig8_fig14_reconstruction.yml'
 
 permissions:
@@ -55,6 +56,8 @@ jobs:
           python3 scripts/validate_dbhitek_inverter.py
       - name: Simulate PMOS-input MOS preamp + CMOS slicer at five corners
         run: python3 simulation/p3_fig14_comparator_mos.py
+      - name: Test 4-bit MOS offset-current correction control
+        run: python3 simulation/p3_fig14_offset_current_trim.py
       - name: Upload numerical evidence (never foundry source)
         if: always()
         uses: actions/upload-artifact@v4
