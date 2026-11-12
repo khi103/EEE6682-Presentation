@@ -1,0 +1,38 @@
+name: P3 real CMOS TX predriver and actual physical MOS link power
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_mos_tx_predriver.py'
+      - '.github/workflows/p3_mos_tx_predriver.yml'
+permissions:
+  contents: read
+jobs:
+  pmos-driver:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        mode: [ideal, physical]
+        alpha: [0.0, 0.3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test 3.6Gbps MOS TX predriver current and actual RX sample coverage
+        run: python3 simulation/p3_mos_tx_predriver.py --mode ${{ matrix.mode }} --alpha ${{ matrix.alpha }}
+      - name: Retain partial power and physical receiver evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MOS-TX-predriver-${{ matrix.mode }}-${{ matrix.alpha }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_mos_TX_predriver/
