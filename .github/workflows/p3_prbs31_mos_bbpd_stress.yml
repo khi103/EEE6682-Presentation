@@ -1,0 +1,36 @@
+name: P3 PRBS31 MOS Fig19 BBPD extended CDR stress
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/stress_prbs31_mos_bbpd.py'
+      - '.github/workflows/p3_prbs31_mos_bbpd_stress.yml'
+permissions:
+  contents: read
+jobs:
+  prbs31:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: ['0x54C4EE17','0x13572468']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install physical MOS simulation backend
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private DB HiTek 180nm MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Stress Fig19 BBPD with nonrepeating PRBS31 and 2000ppm
+        run: python3 scripts/stress_prbs31_mos_bbpd.py --seed ${{ matrix.seed }}
+      - name: Preserve all MOS bit decisions and phase controller histories
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-fig19-prbs31-mos-bbpd-${{ matrix.seed }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_prbs31_mos_bbpd/
