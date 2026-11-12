@@ -1,0 +1,36 @@
+name: P3 isolated XSPICE ADC-DFF undefined-state experiment
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'circuits/p3_xspice_adc_dff_isolation.cir'
+      - 'scripts/p3_parse_xspice_dff_diag.py'
+      - '.github/workflows/p3_xspice_adc_dff_isolation.yml'
+permissions:
+  contents: read
+jobs:
+  pdk-free-DFF:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice 42 mixed-signal engine
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice
+          ngspice --version | head -n 2
+      - name: Isolate XSPICE three flip-flop reset and init configurations
+        run: ngspice -b circuits/p3_xspice_adc_dff_isolation.cir
+      - name: Measure real DAC digital U fractions
+        run: python3 scripts/p3_parse_xspice_dff_diag.py --wave p3_xspice_dff_diag.dat
+      - name: Preserve waveform and classification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-xspice-digital-U-isolation
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            p3_xspice_dff_diag.dat
+            results/audit/p3_xspice_dff_diag.json
