@@ -1,0 +1,28 @@
+name: P3 complex Touchstone lecture FR4 versus RC2 cross-channel FFE
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_complex_s21_channel_ffe.py'
+      - '.github/workflows/p3_complex_s21_channel_ffe.yml'
+permissions:
+  contents: read
+jobs:
+  analytical-S21:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install reproducible Python numerical backend
+        run: python3 -m pip install --disable-pip-version-check numpy
+      - name: Analyze four pinned 100ohm differential FR4 S21 plus synthetic RC2
+        run: python3 simulation/p3_complex_s21_channel_ffe.py
+      - name: Preserve all channel complex-transfer assumptions and heldout FFE results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-complex-S21-cross-channel-FFE-evidence
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/channels/p3_complex_s21/
