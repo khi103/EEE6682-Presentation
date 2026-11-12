@@ -1,0 +1,38 @@
+name: P3 transition-qualified Alexander MOS data recovery phase control
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_transition_qualified_mos_bbpd.py'
+      - '.github/workflows/p3_transition_qualified_mos_bbpd.yml'
+permissions:
+  contents: read
+jobs:
+  physical-bbpd:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        gain: [-80.0, -20.0, 0.0, 20.0, 80.0]
+        shift: [-0.05, 0.95]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XSPICE-enabled ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate authorized private MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test transition qualified sampled digital phase detector with actual MOS TX and RX
+        run: python3 simulation/p3_transition_qualified_mos_bbpd.py --gain ${{ matrix.gain }} --shift ${{ matrix.shift }}
+      - name: Retain physical MOS and phase detector measurements even if function fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-alexander-data-PD-physical-MOS-${{ matrix.gain }}-${{ matrix.shift }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_transition_XSPICE_BBPD/
