@@ -29,6 +29,10 @@ def run(out,alpha,bias):
     tag=f"alpha_{alpha:.2f}_bias_{bias:.2f}".replace(".","p")
     def instrumented_read(file):
         rows=old_read(file)
+        expected_ns=LINK.START_DATA_NS + ORIGINAL.BITS*ORIGINAL.TX.UI_PS*1e-3 + LINK.DATA_END_DELAY_NS
+        if rows[-1]["time_s"]*1e9 < expected_ns-.20:
+            raise RuntimeError("INCOMPLETE MOS FFE analog transient: "
+                               f"{rows[-1]['time_s']*1e9:.4f}ns vs expected {expected_ns:.4f}ns")
         focus=[row for row in rows if row["time_s"] >= (LINK.START_DATA_NS-1)*1e-9]
         with (out/f"{tag}_actual_analog_RX.csv").open("w",newline="") as f:
             field=["time_s","rx_V","vco_V","clkeven_V","clkodd_V"]
