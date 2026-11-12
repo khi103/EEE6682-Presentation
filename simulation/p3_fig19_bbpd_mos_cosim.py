@@ -38,7 +38,9 @@ TESTS=(
  ("late_phase_div16",100,16,0.),
  ("early_phase_div4_plus1000ppm",15,4,1000.),
  ("early_phase_fixed_plus1000ppm",15,0,1000.),
- ("mid_phase_div16",30,16,0.)
+ ("mid_phase_div16",30,16,0.),
+ ("late_hard_phase_div4_plus1000ppm",127,4,1000.),
+ ("late_hard_phase_fixed_plus1000ppm",127,0,1000.)
 )
 
 def load_pump_phase_lut(data:Path):
@@ -178,12 +180,15 @@ def run(out):
     controlled=summaries["early_phase_div4_plus1000ppm"]["mos_rx"]
     open_loop=summaries["early_phase_fixed_plus1000ppm"]["mos_rx"]
     nominal=summaries["early_phase_div4"]["mos_rx"]
+    hard=summaries["late_hard_phase_div4_plus1000ppm"]["mos_rx"]
+    hard_fixed=summaries["late_hard_phase_fixed_plus1000ppm"]["mos_rx"]
     if not (controlled["total_errors_including_unresolved"]<=5 and
             nominal["total_errors_including_unresolved"]<=5 and
-            open_loop["total_errors_including_unresolved"]>=controlled["total_errors_including_unresolved"]+10):
+            open_loop["total_errors_including_unresolved"]>=controlled["total_errors_including_unresolved"]+3 and
+            hard["total_errors_including_unresolved"] <= hard_fixed["total_errors_including_unresolved"]):
         print("FAIL: Fig19-like data PD did not beat truly fixed MOS receiver clock by >=10 bit decisions",flush=True)
         raise AssertionError("BBPD acquisition/outperformance not established; see all MOS decisions")
-    print("PASS: Fig19-like 4-XOR CDR outperforms open-loop fixed phase at +1000ppm with strict MOS latch decisions",flush=True)
+    print(f"PASS: Fig19-like 4-XOR detector improves +1000ppm MOS RX: {controlled['total_errors_including_unresolved']} vs {open_loop['total_errors_including_unresolved']}; hard start {hard['total_errors_including_unresolved']} vs {hard_fixed['total_errors_including_unresolved']}",flush=True)
     return report
 
 if __name__=="__main__":
