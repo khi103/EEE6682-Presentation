@@ -1,0 +1,56 @@
+name: P3 FS actual MOS full-burst completion and solver integrity
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_fs_fullmos_strict_completion.py'
+      - '.github/workflows/p3_fs_fullmos_strict_completion.yml'
+permissions:
+  contents: read
+jobs:
+  strict-burst:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - { corner: fs, alpha: 0.00, bias: 0.95, solver: default }
+          - { corner: fs, alpha: 0.00, bias: 0.95, solver: gear }
+          - { corner: fs, alpha: 0.00, bias: 1.10, solver: default }
+          - { corner: fs, alpha: 0.00, bias: 1.10, solver: gear }
+          - { corner: fs, alpha: 0.00, bias: 1.25, solver: default }
+          - { corner: fs, alpha: 0.00, bias: 1.25, solver: gear }
+          - { corner: fs, alpha: 0.30, bias: 0.95, solver: default }
+          - { corner: fs, alpha: 0.30, bias: 0.95, solver: gear }
+          - { corner: fs, alpha: 0.30, bias: 1.10, solver: default }
+          - { corner: fs, alpha: 0.30, bias: 1.10, solver: gear }
+          - { corner: fs, alpha: 0.30, bias: 1.25, solver: default }
+          - { corner: fs, alpha: 0.30, bias: 1.25, solver: gear }
+          - { corner: tt, alpha: 0.00, bias: 1.10, solver: default }
+          - { corner: tt, alpha: 0.30, bias: 1.10, solver: default }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MOS SPICE backend
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate existing 180nm MOS models
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Check actual 512-bit burst completion before MOS receiver scoring
+        run: >
+          python3 simulation/p3_fs_fullmos_strict_completion.py
+          --corner ${{ matrix.corner }}
+          --alpha ${{ matrix.alpha }}
+          --bias ${{ matrix.bias }}
+          --solver ${{ matrix.solver }}
+      - name: Keep complete and premature-stop evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-strict-MOS-FS-${{ matrix.corner }}-${{ matrix.alpha }}-${{ matrix.bias }}-${{ matrix.solver }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_FS_MOS_strict_completion/
