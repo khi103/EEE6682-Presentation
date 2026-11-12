@@ -1,0 +1,35 @@
+name: P3 independent audit 16 full 1024-bit MOS data-CDR physical runs
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/p3_audit_1024bit_mos_cdr.py'
+      - '.github/workflows/p3_audit_1024bit_mos_cdr.yml'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  audit16:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all sixteen completed physical 1024bit MOS CDR waveforms
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 43261667642
+          pattern: p3-1024bit-mos-CDR-*
+          merge-multiple: true
+          path: original_physical_CDR/
+      - name: Independently score all 16 complete 1024bit MOS CDR tests
+        run: python3 scripts/p3_audit_1024bit_mos_cdr.py --in-dir original_physical_CDR/
+      - name: Save CSV and JSON with actual negative CDR Lock evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-independent-16run-1024bit-MOS-CDR-audit
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/audit/p3_MOS_1024_CDR/
