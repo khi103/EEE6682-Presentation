@@ -1,0 +1,43 @@
+name: P3 independently audit all 90 fixed MOS PLL PVT conditions
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/p3_audit_complete_90_pvt.py'
+      - '.github/workflows/p3_audit_complete_90_pvt.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit-90:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download 42 previously confirmed physical MOS PVT results
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 43244846868
+          pattern: p3-physical-mos-bias-PVT-*
+          merge-multiple: true
+          path: evidence/
+      - name: Download 48 missing PVT intersections
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 43252309753
+          pattern: p3-extra-PLL-PVT-*
+          merge-multiple: true
+          path: evidence/
+      - name: Validate 45 unique PVT combinations per fixed physical MOS circuit
+        run: python3 scripts/p3_audit_complete_90_pvt.py --input evidence/
+      - name: Preserve complete PVT evidence including electrical failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-audit-90-physical-MOS-PVT
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/audit/p3_90PVT/
