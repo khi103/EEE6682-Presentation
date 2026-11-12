@@ -1,0 +1,50 @@
+name: DB HiTek 180nm NMOS PMOS DC IV model sanity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_device_iv_ngspice.py'
+      - '.github/workflows/p3_device_iv.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  measure-device-iv:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice scientific dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip python3 python3-pip
+          python3 -m pip install --user --break-system-packages matplotlib
+      - name: Prepare local model and run CMOS inverter baseline
+        run: |
+          bash scripts/run_dbhitek_smoke.sh
+          python3 scripts/validate_dbhitek_inverter.py
+      - name: Sweep 1.8-V NMOS and PMOS I-V at five PVT corners
+        run: python3 simulation/p3_device_iv_ngspice.py
+      - name: Archive numerical I-V data without foundry model bytes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f results/spice/p3_device_iv/dbhitek_ngspice_device_iv.csv \
+                     results/spice/p3_device_iv/dbhitek_ngspice_device_iv_summary.json
+          if ! git diff --cached --quiet; then
+            git commit -m "results: persist independent ngspice MOS I-V sweeps"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
+      - name: Upload plots and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-mos-device-iv-sanity
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_device_iv/
