@@ -1,0 +1,32 @@
+name: P3 XSPICE 450MHz physically switched MOS PLL PVT validation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_xspice_physical_mos_pll_pvt.py'
+      - '.github/workflows/p3_xspice_mos_pll_pvt.yml'
+permissions:
+  contents: read
+jobs:
+  pvt:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MOS simulator with XSPICE
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: PDK smoke test
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Test full closed MOS switched CP + ring VCO reference PLL over PVT
+        run: python3 simulation/p3_xspice_physical_mos_pll_pvt.py
+      - name: Retain every success or failure including phase deviation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-450mhz-pdf-physical-mos-pll-pvt
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_pll_pvt/
