@@ -40,6 +40,7 @@ def netlist(bits,code):
         "* Actual 4-bit MOS NMOS current-source reference trim",
         f"VREFBASE vref_base 0 DC {RX_BASE_REF_V:.9g}",
         f"RREFDAC vref_base vref_rx {RESISTOR_OHM:.9g}",
+        "CREFTRIM vref_rx 0 100f ic=.28",
     ]
     for w in (1,2,4,8):
         rest.extend([
@@ -48,6 +49,7 @@ def netlist(bits,code):
           f"width=.48u length=.36u multi={w}",
         ])
     deck=deck.replace(original,"\n".join(rest),1)
+    deck=deck.replace(".control",".ic v(vref_rx)=.28\n.control",1)
     original_control="quit\n.endc"
     if deck.count(original_control)!=1:
         raise RuntimeError("Expected one ngspice quit")
