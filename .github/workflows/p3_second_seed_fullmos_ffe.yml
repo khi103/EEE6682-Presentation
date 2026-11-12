@@ -1,0 +1,61 @@
+name: P3 second-seed transistor MOS FFE alpha independent eye reproducibility
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_second_seed_fullmos_ffe.py'
+      - 'scripts/p3_audit_second_seed_ffe.py'
+      - '.github/workflows/p3_second_seed_fullmos_ffe.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  physical:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        alpha: [0.00,0.10,0.20,0.30,0.40,0.50]
+        bias: [0.95,1.10]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice for reconstructed physical MOS TX and RX
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify existing foundry MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Execute fixed MOS TX predriver, RX latch and reference PLL on second PRBS31 pattern
+        run: python3 simulation/p3_second_seed_fullmos_ffe.py --alpha ${{ matrix.alpha }} --bias ${{ matrix.bias }}
+      - name: Store physical MOS decisions and analog eye waveforms
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-second-seed-MOS-FFE-${{ matrix.alpha }}-${{ matrix.bias }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_second_seed_MOS_FFE/
+  fair-audit:
+    needs: physical
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: p3-second-seed-MOS-FFE-*
+          merge-multiple: true
+          path: original_physical_evidence/
+      - name: Score MOS Eye and FFE coefficients using only 512-bit independent PRBS31 training
+        run: python3 scripts/p3_audit_second_seed_ffe.py --in-dir original_physical_evidence/
+      - name: Retain heldout physical MOS eye width, vertical margin and partial power
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-second-seed-independent-MOS-FFE-heldout-audit
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/audit/p3_second_seed_ffe/
