@@ -1,0 +1,45 @@
+name: P3 one-SPICE actual MOS phase-servo PRBS31 and analogue loop stress
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_prbs31_live_mos_cdr_sweep.py'
+      - '.github/workflows/p3_prbs31_live_mos_cdr_sweep.yml'
+permissions:
+  contents: read
+jobs:
+  physical-CDR:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        seed: ['0x54C4EE17', '0x13572468']
+        gain: [-200.0, 0.0, 80.0, 160.0]
+        cap: [0.8, 1.6]
+        shift: [-0.05, 0.95]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice/XSPICE
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate authorized DB HiTek MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Execute real MOS phase actuator with RX analog data-only feedback
+        run: >
+          python3 simulation/p3_prbs31_live_mos_cdr_sweep.py
+          --seed ${{ matrix.seed }}
+          --gain ${{ matrix.gain }}
+          --cap ${{ matrix.cap }}
+          --shift ${{ matrix.shift }}
+      - name: Retain all loop responses and receiver sampling errors
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-prbs31-MOS-CDR-${{ matrix.seed }}-${{ matrix.gain }}-${{ matrix.cap }}-${{ matrix.shift }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_prbs31_live_MOS_CDR/
