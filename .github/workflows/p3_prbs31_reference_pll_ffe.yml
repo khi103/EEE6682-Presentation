@@ -1,0 +1,36 @@
+name: P3 reference PLL physical MOS TX FFE PRBS31 longer pattern
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/stress_prbs31_reference_pll_ffe.py'
+      - '.github/workflows/p3_prbs31_reference_pll_ffe.yml'
+permissions:
+  contents: read
+jobs:
+  prbs31-link:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        alpha: [0.00,0.15,0.30,0.45]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice backend
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Verify private 180nm MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run 512-bit PRBS31 physically clocked MOS receiver and reference PLL
+        run: python3 scripts/stress_prbs31_reference_pll_ffe.py --alpha ${{ matrix.alpha }}
+      - name: Retain longer pattern latch and analog results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-long-prbs31-physical-mos-ffe-alpha-${{ matrix.alpha }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_prbs31_refpll_ffe/
