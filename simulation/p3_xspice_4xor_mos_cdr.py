@@ -87,6 +87,33 @@ def make_deck(bits,gain,shift):
       "wrdata xor_phase_details.csv time v(pdctrl) v(vup0) v(vdn0) v(vup1) v(vdn1) v(rx)\nquit\n.endc",1)
     return deck,start
 
+def analyze_logic(path,start_ns,out_path):
+    """Inspect four-XOR DAC outputs and the real MOS delay-control node."""
+    records=[]
+    for line in path.read_text().splitlines():
+        try:
+            a=[float(x) for x in line.split()]
+        except ValueError:continue
+        if len(a)>=14 and all(math.isfinite(x) for x in a):
+            records.append({"time_s":a[0],"delay_control_V":a[3],
+              "up0":a[5],"dn0":a[7],"up1":a[9],"dn1":a[11],"RX_V":a[13]})
+    if len(records)<100:raise RuntimeError("Missing four-XOR diagnostic trace")
+    with out_path.open("w",newline="") as f:
+        w=csv.DictWriter(f,fieldnames=list(records[0]))
+        w.writeheader()
+        w.writerows(records[::max(1,len(records)//4000)])
+    active=[x for x in records if x["time_s"]>=start_ns*1e-9]
+    diffs=[x["dn0"]+x["dn1"]-x["up0"]-x["up1"] for x in active]
+    ctrl=[x["delay_control_V"] for x in active]
+    return {
+      "post_data_samples":len(active),
+      "mean_signed_UP_DOWN":sum(diffs)/len(diffs) if diffs else None,
+      "peak_abs_UP_DOWN":max(abs(x) for x in diffs) if diffs else None,
+      "nonzero_difference_fraction":sum(abs(x)>.10 for x in diffs)/len(diffs) if diffs else None,
+      "control_min_V":min(ctrl) if ctrl else None,
+      "control_max_V":max(ctrl) if ctrl else None,
+      "control_end_V":ctrl[-1] if ctrl else None}
+
 def main(out,gain,shift):
     if gain not in GAINS_UA or shift not in SHIFTS:raise ValueError("Preset unsupported")
     out.mkdir(parents=True,exist_ok=True)
@@ -116,12 +143,14 @@ def main(out,gain,shift):
         samples,orig=LINK.evaluate(wave,bits,start)
         held=SERVO.score_holdout(samples,bits,start)
         pll=LINK.frequency(wave)
+        logic=analyze_logic(work/"xor_phase_details.csv",start,out/(label+"_logic_wave.csv"))
         result.update({
           "status":"electrical_run",
           "reference_PLL":pll,
           "MOS_receiver_initial_score":orig,
           "heldout_coverage":held,
           "reference_PLL_near_1p8GHz":abs(pll["vco_GHz"]-1.8)<.025,
+          "four_XOR_logic_diagnostics":logic,
         })
         with (out/(label+"_physical_MOS_decisions.csv")).open("w",newline="") as f:
             w=csv.DictWriter(f,fieldnames=list(samples[0]))
