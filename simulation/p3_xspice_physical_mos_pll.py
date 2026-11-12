@@ -26,9 +26,9 @@ RATE_GHZ=1.8
 REF_MHZ=450.0
 TRIM_CODES=(63,)
 V_START=.96
-TIME_NS=800.
+TIME_NS=520.
 VREF_BIAS=.96
-LOOP_C_F=50e-12
+LOOP_C_F=40e-12
 I_SOURCE_W_UM=8.0
 I_SINK_W_UM=8.0
 REF_PERIOD_PS=1e12/(REF_MHZ*1e6)
@@ -92,7 +92,10 @@ def circuit(code,corner=CORNER,initial_bias=V_START):
     lines += [
         "* Physical loop capacitor and bias-stabilizing resistive path.",
         f"VSTART vstart 0 {initial_bias:.7g}",
-        f"CLOOP loopctrl 0 {LOOP_C_F:.10g} ic={initial_bias:.7g}",
+        "* Second-order passive lead-lag PLL loop filter (damping zero).",
+        "RZERO loopctrl lpcap 2k",
+        f"CLOOP lpcap 0 {LOOP_C_F:.10g} ic={initial_bias:.7g}",
+        f"CFAST loopctrl 0 5p ic={initial_bias:.7g}",
         "RLEAK loopctrl vstart 5e8",
         "BNB nb 0 V={min(max(v(loopctrl),.65),1.65)}",
         "BPB pb 0 V={1.8-v(nb)}",
@@ -108,7 +111,8 @@ def circuit(code,corner=CORNER,initial_bias=V_START):
            f"CVCO_LOAD{i} {node} 0 {RING.CL_F:.9g}",
         ]
     lines += [
-        ".ic "+" ".join(f"v(n{i})={'1.8' if i%2 else '0'}" for i in range(1,RING.STAGES+1)),
+        ".ic "+" ".join(f"v(n{i})={'1.8' if i%2 else '0'}" for i in range(1,RING.STAGES+1))
+            + f" v(lpcap)={initial_bias:.7g} v(loopctrl)={initial_bias:.7g}",
         ".control","set noaskquit",
         f"tran 3p {TIME_NS}n uic",
         "wrdata physical_pll.csv time v(n1) v(refclk) v(loopctrl) "
