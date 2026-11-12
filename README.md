@@ -112,3 +112,35 @@ See the [comprehensive report in Korean](docs/P3_Fig8_Fig14_Fig20_MOS_회로검�
 transistor-level TX–RX–PLL/CDR.** PDK HSPICE/ngspice numerical equivalence,
 actual RG58/FR4 S-parameters, original 2004 silicon layout, full-link
 power and jitter remain unavailable or unverified. Do not claim otherwise.
+
+
+## NEW: single-deck transistor-level TX + RX + MOS ring VCO (Nov. 12, 2026)
+
+The previously separate MOS reconstructions have now been electrically
+connected in one **ngspice** netlist:
+
+**3.6-Gb/s 8:4:2:1 MOS TX → two-pole surrogate channel →
+two 1.8-GHz PMOS-input regenerative MOS RX latches**, clocked by
+a **real current-starved three-stage CMOS VCO** and CMOS clock buffers.
+
+The free-running VCO was tuned **externally** to 1.7992 GHz using a
+series of MOS SPICE runs, and the RX sampling phase/parity was selected
+**offline with known PRBS bits**. In the most recent strict regression
+(>=150-mV physical latch Q−QB resolved differential), both no-FFE and
+two-tap-FFE runs achieved **0/104 errors, 0 unresolved latch samples**
+at **TT** (not a BER or independent CDR proof).
+
+- [Strict regression in GitHub Actions](https://github.com/khi103/EEE6682-Presentation/actions/runs/43154855455)
+- [Unified MOS TX/RX/VCO implementation](simulation/p3_full_link_physical_mos_vco.py)
+- [Testbench/graph generator](simulation/plot_full_mos_link.py)
+- [Full Korean technical report and limitations](docs/P3_180nm_전체MOS링크_통합검증_20261112.md)
+
+**In-circuit clock recovery remains unresolved.** A prototype in-ngspice
+behavioral frequency feedback driving the *physical MOS VCO* brought the
+oscillation to **1.801885 GHz**, but a stricter valid-output check found
+**24/104 RX errors**, including 9 unresolved latch states. The later
+data-timing variant also failed (49/104 errors). This is **not** a
+validated physical PLL/CDR or a reproduction of the paper's Fig. 18–20.
+The model uses ideal FFE control sources, channel buffers and reference
+clock, and ignores several foundry HSPICE-only parameters. The original
+2004 silicon and 27.12-mW link performance have **not** been reproduced.
