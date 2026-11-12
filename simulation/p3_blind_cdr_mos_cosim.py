@@ -63,7 +63,7 @@ def recover_clock(rows,initial_phase,rate_offset_ppm,feedback=True):
     """
     ui_rx=UI_S*(1+rate_offset_ppm/1e6)
     events=[v for v in crossings(rows) if v>4*UI_S]
-    phase=initial_phase%1
+    phase=initial_phase  # UNWRAPPED! Do not introduce a one-bit slip at 0/1 UI.
     next_event=0
     updates=[]
     schedule=[]
@@ -72,10 +72,10 @@ def recover_clock(rows,initial_phase,rate_offset_ppm,feedback=True):
         while next_event<len(events) and events[next_event]<deadline:
             e=events[next_event]
             p=((e/ui_rx)+.5)%1
-            correction=GAIN*wrap_phase(p-phase) if feedback else 0.
-            phase=(phase+correction)%1
+            correction=GAIN*wrap_phase(p-(phase%1)) if feedback else 0.
+            phase=phase+correction
             updates.append({"crossing_time_s":e,"target_sample_phase_mod_UI":p,
-                "post_update_phase_mod_UI":phase,"phase_step_UI":correction,
+                "post_update_phase_mod_UI":phase%1,"post_update_unwrapped_phase_UI":phase,"phase_step_UI":correction,
                 "change_detected":int(abs(correction)>1e-12)})
             next_event+=1
         # +1 UI for approximate receive filter latency (constant, not TX bits).
@@ -83,7 +83,8 @@ def recover_clock(rows,initial_phase,rate_offset_ppm,feedback=True):
         schedule.append({
             "bit_clock_cycle_index":n,
             "recovered_sample_time_s":t_sample,
-            "phase_mod_UI":phase,
+            "phase_mod_UI":phase%1,
+            "phase_unwrapped_UI":phase,
             "receiver_ui_s":ui_rx,
             "transition_events_seen":next_event,
             "feedback_enabled":bool(feedback),
@@ -232,7 +233,7 @@ def run(out):
     nominal=results["ffe_initial_0p05_nominal"]["mos_latch"]
     if nominal["total_errors_including_unresolved"]>5:
         raise AssertionError("Nominal CDR MOS receiver failed strict regenerated-output check")
-    if baseline["total_errors_including_unresolved"]>15:
+    if baseline["total_errors_including_unresolved"]>2:
         raise AssertionError("+1000 ppm CDR receiver has too many resolved/unknown errors")
     if baseline["total_errors_including_unresolved"]>=control["total_errors_including_unresolved"]-15:
         raise AssertionError("Data-only timing tracking did not substantially beat fixed off-phase clock")
