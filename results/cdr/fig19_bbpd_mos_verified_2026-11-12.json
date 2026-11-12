@@ -1,0 +1,124 @@
+{
+  "title": "P3 Fig19-like 7-bit four-XOR bang-bang CDR independently clocking MOS RX",
+  "verified_utc": "2026-11-12",
+  "evidence_run_url": "https://github.com/khi103/EEE6682-Presentation/actions/runs/43159596701",
+  "original_article": "Wong et al., IEEE JSSC vol.39 no.4, Fig19/Fig20/Fig21 (2004)",
+  "pdk": "DB HiTek 180nm SVT MOS in ngspice42; NOT paper's original foundry",
+  "source": "simulation/p3_fig19_bbpd_mos_cosim.py",
+  "architecture": {
+    "modeled": "Received-edge/data sampling, 4-XOR BBPD arbitration, downsampled update, 7-bit saturating counter",
+    "actual_mos": "MOS TX 8:4:2:1 and 2 clocked MOS RX latches; 7-bit MOS charge-pump DC current LUT",
+    "assumed": "350-ps full-range current-to-phase mapping based on paper's measured range",
+    "co_simulation": "two-pass analog MOS waveform -> causal digital controller -> ideal PWL receiver clock + analog MOS latch",
+    "no_transmitter_labels_in_control": true,
+    "reference_labels_used_only_postrun_validation_and_integer_frame_alignment": true,
+    "comparator_valid_threshold_mV": 150,
+    "baud_Gbps": 3.6,
+    "prbs_bits": 512,
+    "post_acquisition_test_bits": 378
+  },
+  "results": [
+    {
+      "condition": "early_phase_div4",
+      "initial_counter": 15,
+      "clock_ppm": 0,
+      "update_every_UI": 4,
+      "final_counter": 8,
+      "errors": 0,
+      "unresolved": 0,
+      "evaluated": 378
+    },
+    {
+      "condition": "late_phase_div4",
+      "initial_counter": 100,
+      "clock_ppm": 0,
+      "update_every_UI": 4,
+      "final_counter": 102,
+      "errors": 0,
+      "unresolved": 0,
+      "evaluated": 378
+    },
+    {
+      "condition": "early_phase_div16",
+      "initial_counter": 15,
+      "clock_ppm": 0,
+      "update_every_UI": 16,
+      "final_counter": 8,
+      "errors": 0,
+      "unresolved": 0,
+      "evaluated": 378
+    },
+    {
+      "condition": "late_phase_div16",
+      "initial_counter": 100,
+      "clock_ppm": 0,
+      "update_every_UI": 16,
+      "final_counter": 102,
+      "errors": 0,
+      "unresolved": 0,
+      "evaluated": 378
+    },
+    {
+      "condition": "early_phase_div4_plus1000ppm",
+      "initial_counter": 15,
+      "clock_ppm": 1000,
+      "update_every_UI": 4,
+      "final_counter": 1,
+      "errors": 0,
+      "unresolved": 0,
+      "evaluated": 378
+    },
+    {
+      "condition": "early_phase_fixed_plus1000ppm",
+      "initial_counter": 15,
+      "clock_ppm": 1000,
+      "update_every_UI": null,
+      "final_counter": 15,
+      "errors": 5,
+      "unresolved": 5,
+      "evaluated": 378
+    },
+    {
+      "condition": "mid_phase_div16",
+      "initial_counter": 30,
+      "clock_ppm": 0,
+      "update_every_UI": 16,
+      "final_counter": 8,
+      "errors": 0,
+      "unresolved": 0,
+      "evaluated": 378
+    },
+    {
+      "condition": "late_hard_phase_div4_plus1000ppm",
+      "initial_counter": 127,
+      "clock_ppm": 1000,
+      "update_every_UI": 4,
+      "final_counter": 58,
+      "errors": 0,
+      "unresolved": 0,
+      "evaluated": 378
+    },
+    {
+      "condition": "late_hard_phase_fixed_plus1000ppm",
+      "initial_counter": 127,
+      "clock_ppm": 1000,
+      "update_every_UI": null,
+      "final_counter": 127,
+      "errors": 30,
+      "unresolved": 30,
+      "evaluated": 378
+    }
+  ],
+  "claims": {
+    "independent_BBPD_controller_improves_physical_MOS_latch_recovery": true,
+    "physical_in_spice_data_CDR_phase_loop_locked": false,
+    "complete_original_2004_dual_loop_PLL_reproduced": false,
+    "measured_BER_1e_minus_12_established": false,
+    "charge_pump_phase_transfer_physical": false
+  },
+  "notes": [
+    "The phase shift is assumed from reported measured 350-ps range. The MOS pump was only characterized as an independent DC current DAC.",
+    "A separate in-SPICE behavioral data edge PD with real MOS TX/RX/VCO did NOT satisfy both data and frequency lock criteria.",
+    "All reference bit labels are used only for post-run scoring."
+  ]
+}
