@@ -1,0 +1,76 @@
+name: P3 real CMOS TX predriver six-alpha MOS FFE eye and power audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_fullmos_ffe_alpha_sweep.py'
+      - 'scripts/p3_fullmos_ffe_alpha_audit.py'
+      - '.github/workflows/p3_fullmos_ffe_alpha.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  physical:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - { alpha: 0.00, bias: 0.95 }
+          - { alpha: 0.00, bias: 1.10 }
+          - { alpha: 0.10, bias: 0.95 }
+          - { alpha: 0.10, bias: 1.10 }
+          - { alpha: 0.20, bias: 0.95 }
+          - { alpha: 0.20, bias: 1.10 }
+          - { alpha: 0.30, bias: 0.95 }
+          - { alpha: 0.30, bias: 1.10 }
+          - { alpha: 0.40, bias: 0.95 }
+          - { alpha: 0.40, bias: 1.10 }
+          - { alpha: 0.50, bias: 0.95 }
+          - { alpha: 0.50, bias: 1.10 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate existing authorized MOS model
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run PRBS31 MOS TX predriver PLL RX at one FFE alpha and clock bias
+        run: >
+          python3 simulation/p3_fullmos_ffe_alpha_sweep.py
+          --alpha ${{ matrix.alpha }}
+          --bias ${{ matrix.bias }}
+      - name: Preserve transistor RX analog trace, latch decisions and supply power
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-MOS-alpha-${{ matrix.alpha }}-${{ matrix.bias }}
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/spice/p3_fullmos_ffe_alpha/
+  audit:
+    needs: physical
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover all 12 original physical MOS waveforms and decisions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p3-MOS-alpha-*
+          merge-multiple: true
+          path: physical_results/
+      - name: Independently score one shared trained receiver phase and frame
+        run: python3 scripts/p3_fullmos_ffe_alpha_audit.py --in-dir physical_results/
+      - name: Preserve heldout eye height, opening width and partial supply power
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-full-MOS-FFE-alpha-heldout-compare
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/audit/p3_fullmos_ffe_alpha/
