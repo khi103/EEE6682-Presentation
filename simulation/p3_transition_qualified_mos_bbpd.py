@@ -100,7 +100,7 @@ def circuit(bits,gain,shift):
         # while clkeven is high, after all 3 data sample registers
         # have received the current half-rate unit's samples.
         f"BDATA_FEEDBACK pdctrl 0 I={{ {gain*1e-6:.10g}*"
-           "(v(vdn)-v(vup))*(.5+.5*tanh(8*(v(clkeven)-.9))) }}",
+           "(v(vdn)-v(vup))*(.5+.5*tanh(8*(v(clkeven)-.9))) }",
     ]
     deck=deck.replace(".control","\n".join(lines)+"\n.control",1)
     original="quit\n.endc"
