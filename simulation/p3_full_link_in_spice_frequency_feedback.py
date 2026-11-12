@@ -103,10 +103,11 @@ def run(out):
           "GHz, FLL near 1.8GHz =",outcome["fll_near_target"],
           "physical RX offline-aligned errors=",
           decoded["errors"],"/",decoded["bits_compared"],flush=True)
-    if outcome["fll_near_target"] and decoded["errors"]<=10:
+    if outcome["fll_near_target"] and decoded["errors"]==0:
         print("PASS: in-SPICE FLL-driven real MOS VCO clocks the MOS TX/RC/RX link",flush=True)
     else:
-        print("LIMITATION: Combined FLL/link did not fully meet current target",flush=True)
+        print("FAIL: Combined frequency feedback / MOS receiver did not satisfy the 1.8-GHz and zero-sample-error smoke criteria",flush=True)
+        raise AssertionError("In-circuit MOS FLL + TX/RX validation failed; see JSON output")
     return outcome
 
 if __name__=="__main__":
