@@ -67,12 +67,11 @@ def make_deck(bits,gain,shift):
       "AEDGE1 drx dph2 dzero dzero dE1 dE1b sampled",
       ".model sampled d_dff(clk_delay=1e-11 set_delay=1e-11 reset_delay=1e-11 ic=2 rise_delay=1e-11 fall_delay=1e-11)",
       "AXORUP0 [dE0 dD0] du0 four_xor",
-      "AXORDN0 [dD0 dE1] dd0 four_xor",
+      "AXORDN0 [dD0 dE1] xdn0 four_xor",
       "AXORUP1 [dE1 dD1] du1 four_xor",
-      "AXORDN1 [dD1 dE0] dd1 four_xor",
+      "AXORDN1 [dD1 dE0] xdn1 four_xor",
       ".model four_xor d_xor(rise_delay=8e-12 fall_delay=8e-12 input_load=5e-15)",
-      "ABBDAC4 [du0 dd0 du1 dd1] [vup0 vdn0 vup1 vdn1] xdac",
-      "APROBE_DIGITAL [drx dclke dclko dn1 dph2 dD0 dD1 dE0 dE1] [vdrx vdclke vdclko vdn1probe vdph2 vD0 vD1 vE0 vE1] xdac",
+      "ABBDAC4 [du0 xdn0 du1 xdn1] [vup0 vdn0 vup1 vdn1] xdac",
       ".model xdac dac_bridge(out_low=0 out_high=1 out_undef=.5 input_load=5e-15 t_rise=5e-12 t_fall=5e-12)",
       # Physical integrating cap, behavioral CMOS gain amplifier/driver.
       f"VPDSET pdstart 0 {START_BIAS}",
@@ -86,7 +85,7 @@ def make_deck(bits,gain,shift):
     if deck.count(tail)!=1:raise RuntimeError("Wrong control block")
     deck=deck.replace(tail,
       "wrdata xor_phase_details.csv time v(pdctrl) v(vup0) v(vdn0) v(vup1) v(vdn1) v(rx)\n"
-      "wrdata xor_digital_inputs.csv time v(vdrx) v(vdclke) v(vdclko) v(vdn1probe) v(vdph2) v(vD0) v(vD1) v(vE0) v(vE1)\nquit\n.endc",1)
+      "quit\n.endc",1)
     return deck,start
 
 def analyze_logic(path,start_ns,out_path):
@@ -156,6 +155,8 @@ def main(out,gain,shift):
     result={
       "input_pattern":"256-bit PRBS31",
       "four_XSPICE_XOR_gates_present":True,
+      "XSPICE_digital_drive_collision_fixed":True,
+      "fixed_case_insensitive_DFF_vs_XOR_nodes":"dD0/dd0 and dD1/dd1 separated with xdn0 xdn1",
       "transistor_level_RX_figure19_recreated":False,
       "four_sampler_clock_alignment_original":False,
       "full_binary_7bit_phase_counter":False,
@@ -171,9 +172,7 @@ def main(out,gain,shift):
         # Always preserve actual analog + bridge diagnostics, including
         # when the RX sampler produces NO usable decision timestamps.
         logic=analyze_logic(work/"xor_phase_details.csv",start,out/(label+"_logic_wave.csv"))
-        logic_stages=analyze_digital_stages(work/"xor_digital_inputs.csv",start,out/(label+"_digital_states.csv"))
         result["four_XOR_logic_diagnostics"]=logic
-        result["digital_ADC_DFF_stage_diagnostics"]=logic_stages
         from bisect import bisect_left
         data_t=start*1e-9
         result["raw_clock_edges_after_data_start"]={
@@ -197,7 +196,6 @@ def main(out,gain,shift):
           "heldout_coverage":held,
           "reference_PLL_near_1p8GHz":abs(pll["vco_GHz"]-1.8)<.025,
           "four_XOR_logic_diagnostics":logic,
-          "digital_ADC_DFF_stage_diagnostics":logic_stages,
         })
         with (out/(label+"_physical_MOS_decisions.csv")).open("w",newline="") as f:
             w=csv.DictWriter(f,fieldnames=list(samples[0]))
@@ -212,8 +210,6 @@ def main(out,gain,shift):
           f"holdout_errors={h.get('total_invalid')}/{h.get('expected')} "
           f"wrong={h.get('wrong_regenerated')} "
           f"missed={h.get('missing')} "
-          f"RXADC_U={result.get('digital_ADC_DFF_stage_diagnostics',{}).get('RX_adc',{}).get('fraction_unknown_0p5V')} "
-          f"DFF0_U={result.get('digital_ADC_DFF_stage_diagnostics',{}).get('D0_dff',{}).get('fraction_unknown_0p5V')} "
           f"VCO_GHz={result.get('reference_PLL',{}).get('vco_GHz')}",flush=True)
     return result
 
