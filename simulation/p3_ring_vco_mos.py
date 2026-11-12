@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Standalone tunable 5-stage 180-nm CMOS ring VCO.
+"""Standalone tunable 3-stage 180-nm CMOS ring VCO.
 
 Real DB HiTek 1.8V SVT MOS devices are used for 5 current-starved CMOS
 inverters. MOS VCO netlists and ngspice transient waveforms genuinely run
@@ -13,7 +13,7 @@ import argparse,csv,json,math,shutil
 from bisect import bisect_left
 import p3_transistor_driver as TX
 
-STAGES=5
+STAGES=3
 BIAS_N_VALUES=(.65,.85,1.05,1.25,1.45,1.65)
 PVT=("tt","ff","ss")
 RUN_NS=20
@@ -22,7 +22,7 @@ CL_F=2e-15
 def deck(corner,control):
     pgate=1.8-control
     lines=[
-      "* Independent current-starved PDK MOS five-stage ring VCO",
+      "* Independent current-starved PDK MOS three-stage ring VCO",
       f'.include "db180_svt018_{corner}.lib"',
       ".temp 27",
       "VDD vdd 0 DC 1.8",
@@ -39,7 +39,7 @@ def deck(corner,control):
             f"XNSTARVE{i} vn{i} nb 0 0 nch_svt_1p8v width=2u length=.18u multi=1",
             f"CLOAD{i} {node} 0 {CL_F:.8g}",
         ]
-    lines+=[".ic v(n1)=1.8 v(n2)=0 v(n3)=1.8 v(n4)=0 v(n5)=0",
+    lines+=[".ic " + " ".join(f"v(n{i})={'1.8' if i%2 else '0'}" for i in range(1,STAGES+1)),
            ".control","set noaskquit",
            f"tran 2p {RUN_NS}n uic",
            "wrdata vco.csv time v(n1) v(n3) i(vdd)",
@@ -114,7 +114,7 @@ def run(out):
         wr.writeheader();wr.writerows(data)
     status={
       "status":"executed_real_mos_tunable_ring_oscillator_sweep",
-      "topology":"independent five-stage current-starved MOS ring, open-loop",
+      "topology":"independent three-stage current-starved MOS ring, open-loop",
       "simulator":"ngspice42 / DB HiTek SVT 180nm 1.8V",
       "load_capacitance_F":CL_F,
       "simulations":runner.calls,
@@ -122,7 +122,7 @@ def run(out):
       "limits":["Not original Fig18 physical VCO design",
                 "No PFD, charge pump, loop filter or PLL lock in MOS",
                 "Ideal DC VCO bias sources, no supply noise, clock buffer or fractional divider",
-                "Frequency at only five-stage selected PDK widths/temperatures"]
+                "Frequency at only three-stage selected PDK widths/temperatures"]
     }
     (out/"ring_vco_results.json").write_text(json.dumps(status,indent=2)+"\n")
     assert any(r["oscillating"] for r in data if r["corner"]=="tt"),"No TT VCO oscillation"
