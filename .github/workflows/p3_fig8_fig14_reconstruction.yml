@@ -63,6 +63,5 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
           path: |
-            results/spice/p3_fig14_comparator/fig14_comparator_summary.json
-            results/spice/p3_fig14_comparator/fig14_comparator_dc.csv
-            results/spice/p3_fig14_comparator/fig14_comparator_transient.csv
+            results/spice/p3_fig14_comparator/*.json
+            results/spice/p3_fig14_comparator/*.csv
