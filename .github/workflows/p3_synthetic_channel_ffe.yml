@@ -1,0 +1,28 @@
+name: P3 public no-proprietary synthetic channel FFE sensitivity
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_synthetic_channel_ffe_portability.py'
+      - '.github/workflows/p3_synthetic_channel_ffe.yml'
+permissions:
+  contents: read
+jobs:
+  synthetic-channel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install numerical dependencies
+        run: python3 -m pip install --user numpy
+      - name: Simulate 4096 PRBS31 symbols across analytic channel loss echo and FFE
+        run: python3 simulation/p3_synthetic_channel_ffe_portability.py
+      - name: Preserve 48 physical-channel-surrogate FFE conditions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-synthetic-loss-echo-ffe
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/channels/p3_synthetic_ffe/
