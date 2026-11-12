@@ -1,0 +1,38 @@
+name: P3 common-VCO-load full-PVT MOS reference PLL lock
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_global_vco_cap_pll.py'
+      - '.github/workflows/p3_global_vco_cap_pll.yml'
+permissions:
+  contents: read
+jobs:
+  pvt-load:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        corner: [tt, ff, ss, fs, sf]
+        cap: [2.0, 3.0, 4.0, 5.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Validate private DB HiTek MOS PDK
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Run fixed-VCO-load closed physical MOS PLL 5-corner sweep
+        run: python3 simulation/p3_global_vco_cap_pll.py --corner ${{ matrix.corner }} --cap ${{ matrix.cap }}
+      - name: Preserve full negative and positive lock evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-fixed-VCO-load-PVT-${{ matrix.corner }}-${{ matrix.cap }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: results/spice/p3_global_VCO_cap_PLL/
