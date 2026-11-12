@@ -1,0 +1,84 @@
+name: P3 42-case identical-design physically MOS-reference PLL full-PVT qualification
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'simulation/p3_fixed_pll_full_pvt.py'
+      - '.github/workflows/p3_fixed_pll_full_pvt.yml'
+permissions:
+  contents: read
+jobs:
+  physical-PLL-PVT:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { design: tracked_091, corner: tt, temp: -20, vdd: 1.80 }
+          - { design: tracked_091, corner: tt, temp: 27, vdd: 1.80 }
+          - { design: tracked_091, corner: tt, temp: 85, vdd: 1.80 }
+          - { design: tracked_091, corner: ff, temp: -20, vdd: 1.80 }
+          - { design: tracked_091, corner: ff, temp: 27, vdd: 1.80 }
+          - { design: tracked_091, corner: ff, temp: 85, vdd: 1.80 }
+          - { design: tracked_091, corner: ss, temp: -20, vdd: 1.80 }
+          - { design: tracked_091, corner: ss, temp: 27, vdd: 1.80 }
+          - { design: tracked_091, corner: ss, temp: 85, vdd: 1.80 }
+          - { design: tracked_091, corner: fs, temp: -20, vdd: 1.80 }
+          - { design: tracked_091, corner: fs, temp: 27, vdd: 1.80 }
+          - { design: tracked_091, corner: fs, temp: 85, vdd: 1.80 }
+          - { design: tracked_091, corner: sf, temp: -20, vdd: 1.80 }
+          - { design: tracked_091, corner: sf, temp: 27, vdd: 1.80 }
+          - { design: tracked_091, corner: sf, temp: 85, vdd: 1.80 }
+          - { design: tracked_091, corner: tt, temp: 27, vdd: 1.71 }
+          - { design: tracked_091, corner: tt, temp: 27, vdd: 1.89 }
+          - { design: tracked_091, corner: ff, temp: 27, vdd: 1.71 }
+          - { design: tracked_091, corner: ff, temp: 27, vdd: 1.89 }
+          - { design: tracked_091, corner: ss, temp: 27, vdd: 1.71 }
+          - { design: tracked_091, corner: ss, temp: 27, vdd: 1.89 }
+          - { design: tracked_graded, corner: tt, temp: -20, vdd: 1.80 }
+          - { design: tracked_graded, corner: tt, temp: 27, vdd: 1.80 }
+          - { design: tracked_graded, corner: tt, temp: 85, vdd: 1.80 }
+          - { design: tracked_graded, corner: ff, temp: -20, vdd: 1.80 }
+          - { design: tracked_graded, corner: ff, temp: 27, vdd: 1.80 }
+          - { design: tracked_graded, corner: ff, temp: 85, vdd: 1.80 }
+          - { design: tracked_graded, corner: ss, temp: -20, vdd: 1.80 }
+          - { design: tracked_graded, corner: ss, temp: 27, vdd: 1.80 }
+          - { design: tracked_graded, corner: ss, temp: 85, vdd: 1.80 }
+          - { design: tracked_graded, corner: fs, temp: -20, vdd: 1.80 }
+          - { design: tracked_graded, corner: fs, temp: 27, vdd: 1.80 }
+          - { design: tracked_graded, corner: fs, temp: 85, vdd: 1.80 }
+          - { design: tracked_graded, corner: sf, temp: -20, vdd: 1.80 }
+          - { design: tracked_graded, corner: sf, temp: 27, vdd: 1.80 }
+          - { design: tracked_graded, corner: sf, temp: 85, vdd: 1.80 }
+          - { design: tracked_graded, corner: tt, temp: 27, vdd: 1.71 }
+          - { design: tracked_graded, corner: tt, temp: 27, vdd: 1.89 }
+          - { design: tracked_graded, corner: ff, temp: 27, vdd: 1.71 }
+          - { design: tracked_graded, corner: ff, temp: 27, vdd: 1.89 }
+          - { design: tracked_graded, corner: ss, temp: 27, vdd: 1.71 }
+          - { design: tracked_graded, corner: ss, temp: 27, vdd: 1.89 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ngspice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ngspice unzip
+      - name: Confirm existing MOS PDK available
+        run: bash scripts/run_dbhitek_smoke.sh
+      - name: Independently validate physical MOS 450MHz PLL with one common design across PVT
+        run: >
+          python3 simulation/p3_fixed_pll_full_pvt.py
+          --design ${{ matrix.design }}
+          --corner ${{ matrix.corner }}
+          --temp ${{ matrix.temp }}
+          --vdd ${{ matrix.vdd }}
+      - name: Preserve each electrical negative/positive result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-PLL-PVT-${{ matrix.design }}-${{ matrix.corner }}-${{ matrix.temp }}-${{ matrix.vdd }}
+          retention-days: 45
+          if-no-files-found: warn
+          path: results/spice/p3_fixed_PLL_full_PVT/
