@@ -63,3 +63,9 @@ HSPICE-only BSIM3 model parameters; no HSPICE numeric correlation has yet been
 established. The 0.5-V signal supply power excludes gate-driver power and
 receiver termination bias. Use the full documentation rather than treating the
 good nominal 50-ohm result as a silicon validation.
+
+## Expanded electrical validation (Nov. 12, 2026)
+
+The enhanced MOS ngspice workflow also checks each code at its **actual loaded PAD voltage** (source impedance **35.92–50.35 Ω**, despite **49.20–50.72 Ω** at the fixed 0.25-V reference). An ideal gate-bias sweep shows that FF/FS can approach 50 Ω at the tested operating point, whereas SS/SF cannot do so within a 0.9–1.8-V gate-high range. Synthetic Gaussian RX noise and sampling jitter applied to *ngspice-generated waveforms* further indicate a conditional FFE decision-margin benefit, but are **not physical comparator/CDR or measured BER simulations**.
+
+Full verified results, uncertainties, open questions, links to the new CSVs and the exact run: [docs/p3_expanded_verification_2026-11-12.md](docs/p3_expanded_verification_2026-11-12.md).
